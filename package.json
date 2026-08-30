@@ -2,21 +2,25 @@
   "name": "@engblock/inertia-solid",
   "version": "0.1.0-alpha.0",
   "description": "SolidJS 2 adapter for Inertia.js",
-  "keywords": ["inertia", "solid", "solidjs", "adapter"],
+  "keywords": [
+    "adapter",
+    "inertia",
+    "solid",
+    "solidjs"
+  ],
+  "homepage": "https://github.com/EngBlock/inertia-solid#readme",
+  "bugs": {
+    "url": "https://github.com/EngBlock/inertia-solid/issues"
+  },
   "license": "MIT",
-  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/EngBlock/inertia-solid.git"
   },
-  "bugs": {
-    "url": "https://github.com/EngBlock/inertia-solid/issues"
-  },
-  "homepage": "https://github.com/EngBlock/inertia-solid#readme",
-  "publishConfig": {
-    "access": "public"
-  },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -32,13 +36,19 @@
       "import": "./dist/server.js"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "pnpm clean && vite build --mode client && vite build --mode ssr && tsc --emitDeclarationOnly",
     "prepack": "pnpm build",
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "check": "pnpm typecheck && pnpm test && pnpm build && pnpm test:ssr && pnpm test:browser",
+    "format": "oxfmt .",
+    "lint": "oxlint --fix .",
+    "check": "pnpm format && pnpm lint",
+    "verify": "pnpm typecheck && pnpm test && pnpm build && pnpm test:ssr && pnpm test:browser",
     "test:ssr": "node tests/ssr-smoke.mjs",
     "test:browser": "pnpm build && pnpm --dir tests/browser test",
     "test:browser:csr": "pnpm build && pnpm --dir tests/browser test:csr",
@@ -47,11 +57,6 @@
     "playground:build": "pnpm build && pnpm --filter inertia-solid-playground build",
     "playground:dev": "pnpm build && pnpm --parallel --filter @engblock/inertia-solid --filter inertia-solid-playground dev",
     "playground:test": "pnpm --dir playgrounds/laravel test"
-  },
-  "peerDependencies": {
-    "@inertiajs/core": "^3.7.0",
-    "@solidjs/web": "^2.0.0-rc.0",
-    "solid-js": "^2.0.0-rc.0"
   },
   "dependencies": {
     "es-toolkit": "^1.33.0",
@@ -62,10 +67,17 @@
     "@solidjs/vite-plugin": "^3.0.0-next.36",
     "@solidjs/web": "2.0.0-rc.0",
     "jsdom": "^26.1.0",
+    "oxfmt": "^0.65.0",
+    "oxlint": "^1.80.0",
     "solid-js": "2.0.0-rc.0",
     "typescript": "^7.0.2",
     "vite": "^8.2.1",
     "vitest": "^3.2.4"
+  },
+  "peerDependencies": {
+    "@inertiajs/core": "^3.7.0",
+    "@solidjs/web": "^2.0.0-rc.0",
+    "solid-js": "^2.0.0-rc.0"
   },
   "engines": {
     "node": ">=20"
