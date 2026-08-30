@@ -1,0 +1,67 @@
+{
+  "name": "@engblock/inertia-solid",
+  "version": "0.1.0-alpha.0",
+  "description": "SolidJS 2 adapter for Inertia.js",
+  "keywords": ["inertia", "solid", "solidjs", "adapter"],
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EngBlock/inertia-solid.git"
+  },
+  "bugs": {
+    "url": "https://github.com/EngBlock/inertia-solid/issues"
+  },
+  "homepage": "https://github.com/EngBlock/inertia-solid#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": ["dist"],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "browser": "./dist/index.js",
+      "worker": "./dist/ssr/index.js",
+      "node": "./dist/ssr/index.js",
+      "import": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
+    }
+  },
+  "scripts": {
+    "build": "pnpm clean && vite build --mode client && vite build --mode ssr && tsc --emitDeclarationOnly",
+    "prepack": "pnpm build",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "pnpm typecheck && pnpm test && pnpm build && pnpm test:ssr",
+    "test:ssr": "node tests/ssr-smoke.mjs",
+    "dev": "vite build --watch"
+  },
+  "peerDependencies": {
+    "@inertiajs/core": "^3.7.0",
+    "@solidjs/web": "^2.0.0-rc.0",
+    "solid-js": "^2.0.0-rc.0"
+  },
+  "dependencies": {
+    "es-toolkit": "^1.33.0"
+  },
+  "devDependencies": {
+    "@inertiajs/core": "^3.7.0",
+    "@solidjs/vite-plugin": "^3.0.0-next.36",
+    "@solidjs/web": "2.0.0-rc.0",
+    "jsdom": "^26.1.0",
+    "solid-js": "2.0.0-rc.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.2.1",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@11.22.0"
+}
