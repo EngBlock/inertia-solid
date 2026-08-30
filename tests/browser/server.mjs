@@ -14,8 +14,15 @@ const ssrRenderer = ssr ? await import('./dist/server/ssr.js') : null
 const routes = {
   '/': { component: 'Home', props: { message: 'Rendered by the shared fixture server' } },
   '/about': { component: 'About', props: { message: 'Client-side navigation completed' } },
+  '/dump/get': { component: 'Dump', props: {} },
   '/dump/post': { component: 'Dump', props: {} },
+  '/dump/put': { component: 'Dump', props: {} },
+  '/dump/patch': { component: 'Dump', props: {} },
+  '/dump/delete': { component: 'Dump', props: {} },
   '/form-helper/errors': { component: 'FormHelper/Errors', props: { errors: {} } },
+  '/form-helper/methods': { component: 'FormHelper/Methods', props: {} },
+  '/form-helper/optimistic': { component: 'FormHelper/Optimistic', props: { count: 1, errors: {} } },
+  '/form-helper/remember': { component: 'FormHelper/Remember', props: {} },
   '/form-helper/set-data-then-post': { component: 'FormHelper/SetDataThenPost', props: {} },
   '/layout-props/basic': { component: 'LayoutProps/Basic', props: {} },
   '/layout-props/named-dynamic': { component: 'LayoutProps/NamedDynamic', props: { title: 'Page Title' } },
@@ -135,9 +142,9 @@ createServer(async (request, response) => {
     if (request.headers['x-inertia']) {
       let inertiaPage = page
 
-      if (request.method === 'POST' && url.pathname === '/dump/post') {
-        const data = await readRequestData(request)
-        inertiaPage = { ...page, props: { errors: {}, form: data, method: 'post' } }
+      if (url.pathname.startsWith('/dump/')) {
+        const data = request.method === 'GET' ? Object.fromEntries(url.searchParams) : await readRequestData(request)
+        inertiaPage = { ...page, props: { errors: {}, form: data, method: request.method.toLowerCase() } }
       }
 
       if (request.method === 'POST' && url.pathname === '/form-helper/errors') {
@@ -145,6 +152,17 @@ createServer(async (request, response) => {
         inertiaPage = {
           ...page,
           props: data.profile?.name ? { errors: {} } : { errors: { 'profile.name': 'The name field is required.' } },
+        }
+      }
+
+      if (request.method === 'POST' && url.pathname === '/form-helper/optimistic') {
+        const data = await readRequestData(request)
+        await new Promise((resolve) => setTimeout(resolve, 150))
+        inertiaPage = {
+          ...page,
+          props: data.fail
+            ? { count: 1, errors: { fail: 'Optimistic update failed.' } }
+            : { count: 2, errors: {} },
         }
       }
 

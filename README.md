@@ -160,13 +160,14 @@ Implemented:
 - `usePoll`
 - `usePrefetch`
 - `useRemember`
+- Typed `useForm` visit lifecycle, remembrance, cancellation, and optimistic updates
 - Owner-safe persistent and named layouts
 - Reactive `setLayoutProps` and `resetLayoutProps`
 - Core/config/server exports
 
 Next priorities:
 
-1. `useForm`, `<Form>`, and Precognition
+1. `<Form>` and Precognition
 2. `useHttp`
 3. `WhenVisible` and `InfiniteScroll`
 4. Full Inertia shared Playwright suite and browser matrix
