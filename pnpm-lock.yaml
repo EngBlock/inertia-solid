@@ -74,6 +74,37 @@ importers:
         specifier: ^8.0.0
         version: 8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)
 
+  tests/browser:
+    dependencies:
+      '@engblock/inertia-solid':
+        specifier: workspace:*
+        version: link:../..
+      '@inertiajs/core':
+        specifier: ^3.7.0
+        version: 3.7.0(axios@1.20.0(debug@4.4.3))
+      '@solidjs/web':
+        specifier: 2.0.0-rc.0
+        version: 2.0.0-rc.0(solid-js@2.0.0-rc.0)
+      solid-js:
+        specifier: 2.0.0-rc.0
+        version: 2.0.0-rc.0
+    devDependencies:
+      '@playwright/test':
+        specifier: 1.58.2
+        version: 1.58.2
+      '@solidjs/vite-plugin':
+        specifier: ^3.0.0-next.36
+        version: 3.0.0-next.36(@solidjs/web@2.0.0-rc.0(solid-js@2.0.0-rc.0))(solid-js@2.0.0-rc.0)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0))
+      '@types/node':
+        specifier: ^26.4.0
+        version: 26.4.0
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.2.1
+        version: 8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)
+
 packages:
 
   '@ampproject/remapping@2.3.0':
@@ -398,6 +429,11 @@ packages:
   '@oxc-project/types@0.147.0':
     resolution: {integrity: sha512-IJ3s6ltHLp45S0bh7phkX+gJO7A1Wuz2EaqpAhb8WjqDwbzMiWKHhyyT42tskaWjEYXtHtVCPpnBJVT9+dcRLg==}
 
+  '@playwright/test@1.58.2':
+    resolution: {integrity: sha512-akea+6bHYBBfA9uQqSYmlJXn61cTa+jbO87xVLCWbTqbWadRVmhxlXATaOjOgcBaWU4ePo0wB41KMFv3o35IXA==}
+    engines: {node: '>=18'}
+    hasBin: true
+
   '@rolldown/binding-android-arm-eabi@1.2.6':
     resolution: {integrity: sha512-b+jTcARdTiFLI6jB4a5XjTm0RWd6KcRfQj/I2356fxUZemiho9zQLxo0RtCuMDAyKcLo6cEltkgbQp6d1+sjjQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -674,8 +710,8 @@ packages:
   '@solidjs/compiler@2.0.0-rc.4':
     resolution: {integrity: sha512-lKx6Jp1KbHxqO+v+g7cRbm8I1DHx/10Lj8bKG4vmdGnCfSlFbyhCd8cPTLdLV0YVG7GGSzzF5m8NkC9NlfGN5w==}
 
-  '@solidjs/signals@2.0.0-rc.0':
-    resolution: {integrity: sha512-oKZSfvsCcKw1uJjOGbUkJ+OqlhXLHtZ+rShSyu9KH0lUH7UUwfMfsKeh81JPiQxDDg4YLhEwI38hg0JkwzTdvA==}
+  '@solidjs/signals@2.0.0-rc.4':
+    resolution: {integrity: sha512-l7P0g8+2pnNscaIPOGDMhv0boaidGAsvR8QN66JySIWNMvVnuq2ayv7ZnvP+IR00DJC+RqCNnnTG/UCdxf+h8g==}
 
   '@solidjs/vite-plugin@3.0.0-next.36':
     resolution: {integrity: sha512-PMreKx9IeQwSRt6xt8LQHe58Gk79CVaB57PQMlvXUdbyL5JliaehOSg5a4W6bKoJfeWku7nryEWUvTDKyZ2PBg==}
@@ -1011,6 +1047,11 @@ packages:
     resolution: {integrity: sha512-vKatAh4SlVfgbv+YtmhiRjhEMJsYpsG1Y2rMQtR+SVSbytsSD1YGzDIcrAJmdFec88u/+VoGmxnl+80gL1tRCQ==}
     engines: {node: '>= 6'}
 
+  fsevents@2.3.2:
+    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
+    os: [darwin]
+
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -1339,6 +1380,16 @@ packages:
   picomatch@4.0.7:
     resolution: {integrity: sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==}
     engines: {node: '>=12'}
+
+  playwright-core@1.58.2:
+    resolution: {integrity: sha512-yZkEtftgwS8CsfYo7nm0KE8jsvm6i/PTgVtB8DL726wNf6H2IMsDuxCpJj59KDaxCtSnrWan2AeDqM7JBaultg==}
+    engines: {node: '>=18'}
+    hasBin: true
+
+  playwright@1.58.2:
+    resolution: {integrity: sha512-vA30H8Nvkq/cPBnNw4Q8TWz1EJyqgpuinBcHET0YVJVFldr8JDNiU9LaWAE1KqSkRYazuaBhTpB5ZzShOezQ6A==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   postcss@8.5.26:
     resolution: {integrity: sha512-u82N74LFzG8ca+dD8puPnplTXoGH4fTPpVGuIbt36G3qvNlkvfD0lEAZSxaly3KX8TS/L1A1gsCEmvKmBcVbkQ==}
@@ -1926,6 +1977,10 @@ snapshots:
 
   '@oxc-project/types@0.147.0': {}
 
+  '@playwright/test@1.58.2':
+    dependencies:
+      playwright: 1.58.2
+
   '@rolldown/binding-android-arm-eabi@1.2.6':
     optional: true
 
@@ -2089,7 +2144,7 @@ snapshots:
       '@solidjs/compiler-wasm32-wasi': 2.0.0-rc.4
       '@solidjs/compiler-win32-x64-msvc': 2.0.0-rc.4
 
-  '@solidjs/signals@2.0.0-rc.0': {}
+  '@solidjs/signals@2.0.0-rc.4': {}
 
   '@solidjs/vite-plugin@3.0.0-next.36(@solidjs/web@2.0.0-rc.0(solid-js@2.0.0-rc.0))(solid-js@2.0.0-rc.0)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0))':
     dependencies:
@@ -2442,6 +2497,9 @@ snapshots:
       mime-types: 2.1.35
     optional: true
 
+  fsevents@2.3.2:
+    optional: true
+
   fsevents@2.3.3:
     optional: true
 
@@ -2721,6 +2779,14 @@ snapshots:
 
   picomatch@4.0.7: {}
 
+  playwright-core@1.58.2: {}
+
+  playwright@1.58.2:
+    dependencies:
+      playwright-core: 1.58.2
+    optionalDependencies:
+      fsevents: 2.3.2
+
   postcss@8.5.26:
     dependencies:
       nanoid: 3.3.18
@@ -2805,7 +2871,7 @@ snapshots:
 
   solid-js@2.0.0-rc.0:
     dependencies:
-      '@solidjs/signals': 2.0.0-rc.0
+      '@solidjs/signals': 2.0.0-rc.4
       csstype: 3.2.3
       seroval: 1.5.6
       seroval-plugins: 1.5.6(seroval@1.5.6)

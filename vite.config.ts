@@ -10,7 +10,9 @@ export default defineConfig(({ mode }) => {
   const ssr = mode === 'ssr'
 
   return {
-    plugins: [solid({ ssr })],
+    // The browser export must remain hydratable because consumers use the same
+    // precompiled package for CSR and SSR hydration.
+    plugins: [solid({ ssr: true })],
     build: ssr
       ? {
           ssr: 'src/index.ts',

@@ -1,6 +1,7 @@
 packages:
   - '.'
   - 'playgrounds/*'
+  - 'tests/browser'
 
 allowBuilds:
   esbuild: true

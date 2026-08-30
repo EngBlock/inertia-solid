@@ -111,6 +111,8 @@ pnpm install
 pnpm check
 ```
 
+The browser parity harness runs the same baseline navigation in CSR and SSR/hydration modes. Focused commands are `pnpm test:browser:csr` and `pnpm test:browser:ssr`; its adapter selector, ports, build steps, and fixture layout are documented in [`tests/browser/README.md`](tests/browser/README.md).
+
 ## Laravel playground
 
 A Laravel integration app lives in [`playgrounds/laravel`](playgrounds/laravel). It links this adapter through the pnpm workspace and includes example pages and feature tests.
