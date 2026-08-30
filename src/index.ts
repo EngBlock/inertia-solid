@@ -16,4 +16,12 @@ export { default as usePage } from './usePage'
 export { default as usePoll } from './usePoll'
 export { default as usePrefetch } from './usePrefetch'
 export type { PrefetchState } from './usePrefetch'
+export { default as useForm } from './useForm'
+export type {
+  InertiaForm,
+  SetDataAction,
+  SetDataByKeyValuePair,
+  SetDataByMethod,
+  SetDataByObject,
+} from './useForm'
 export { default as useRemember } from './useRemember'

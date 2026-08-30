@@ -14,6 +14,9 @@ const ssrRenderer = ssr ? await import('./dist/server/ssr.js') : null
 const routes = {
   '/': { component: 'Home', props: { message: 'Rendered by the shared fixture server' } },
   '/about': { component: 'About', props: { message: 'Client-side navigation completed' } },
+  '/dump/post': { component: 'Dump', props: {} },
+  '/form-helper/errors': { component: 'FormHelper/Errors', props: { errors: {} } },
+  '/form-helper/set-data-then-post': { component: 'FormHelper/SetDataThenPost', props: {} },
   '/layout-props/basic': { component: 'LayoutProps/Basic', props: {} },
   '/layout-props/named-dynamic': { component: 'LayoutProps/NamedDynamic', props: { title: 'Page Title' } },
   '/layout-props/persistent-a': { component: 'LayoutProps/PersistentA', props: {} },
@@ -45,6 +48,17 @@ function pageFor(pathname) {
     encryptHistory: false,
     rescuedProps: [],
   }
+}
+
+async function readRequestData(request) {
+  const chunks = []
+  for await (const chunk of request) chunks.push(chunk)
+  const body = Buffer.concat(chunks).toString('utf8')
+
+  if (!body) return {}
+  if (request.headers['content-type']?.includes('application/json')) return JSON.parse(body)
+
+  return Object.fromEntries(new URLSearchParams(body))
 }
 
 function serializePage(page) {
@@ -119,6 +133,21 @@ createServer(async (request, response) => {
     }
 
     if (request.headers['x-inertia']) {
+      let inertiaPage = page
+
+      if (request.method === 'POST' && url.pathname === '/dump/post') {
+        const data = await readRequestData(request)
+        inertiaPage = { ...page, props: { errors: {}, form: data, method: 'post' } }
+      }
+
+      if (request.method === 'POST' && url.pathname === '/form-helper/errors') {
+        const data = await readRequestData(request)
+        inertiaPage = {
+          ...page,
+          props: data.profile?.name ? { errors: {} } : { errors: { 'profile.name': 'The name field is required.' } },
+        }
+      }
+
       response
         .writeHead(200, {
           'Cache-Control': 'no-store',
@@ -126,7 +155,7 @@ createServer(async (request, response) => {
           Vary: 'X-Inertia',
           'X-Inertia': 'true',
         })
-        .end(JSON.stringify(page))
+        .end(JSON.stringify(inertiaPage))
       return
     }
 

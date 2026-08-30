@@ -1,0 +1,303 @@
+import {
+  router,
+  type ErrorValue,
+  type FormDataErrors,
+  type FormDataKeys,
+  type FormDataType,
+  type FormDataValues,
+  type Progress,
+  type RequestPayload,
+  type UseFormSubmitOptions,
+  type UseFormTransformCallback,
+  type VisitOptions,
+} from '@inertiajs/core'
+import { cloneDeep, isEqual } from 'es-toolkit'
+import { get, has, set } from 'es-toolkit/compat'
+import { createStore, flush, onCleanup, type Store } from 'solid-js'
+import { config } from './config'
+
+export type SetDataByObject<TForm> = (data: Partial<TForm>) => void
+export type SetDataByMethod<TForm> = (data: (previousData: TForm) => TForm) => void
+export type SetDataByKeyValuePair<TForm> = <K extends FormDataKeys<TForm>>(
+  key: K,
+  value: FormDataValues<TForm, K>,
+) => void
+export type SetDataAction<TForm extends object> = SetDataByObject<TForm> &
+  SetDataByMethod<TForm> &
+  SetDataByKeyValuePair<TForm>
+
+export interface InertiaForm<TForm extends object> {
+  readonly data: Store<TForm>
+  readonly isDirty: boolean
+  readonly errors: FormDataErrors<TForm>
+  readonly hasErrors: boolean
+  readonly processing: boolean
+  readonly progress: Progress | null
+  readonly wasSuccessful: boolean
+  readonly recentlySuccessful: boolean
+  setData: SetDataAction<TForm>
+  transform(callback: UseFormTransformCallback<TForm>): void
+  setDefaults: {
+    (): void
+    <K extends FormDataKeys<TForm>>(field: K, value: FormDataValues<TForm, K>): void
+    (fields: Partial<TForm>): void
+  }
+  reset<K extends FormDataKeys<TForm>>(...fields: K[]): void
+  clearErrors<K extends FormDataKeys<TForm>>(...fields: K[]): void
+  resetAndClearErrors<K extends FormDataKeys<TForm>>(...fields: K[]): void
+  setError: {
+    <K extends FormDataKeys<TForm>>(field: K, value: ErrorValue): void
+    (errors: FormDataErrors<TForm>): void
+  }
+  post(url: string, options?: UseFormSubmitOptions): void
+}
+
+type FormState<TForm extends object> = {
+  data: TForm
+  defaults: TForm
+  errors: FormDataErrors<TForm>
+  processing: boolean
+  progress: Progress | null
+  wasSuccessful: boolean
+  recentlySuccessful: boolean
+}
+
+export default function useForm<TForm extends FormDataType<TForm>>(data?: TForm | (() => TForm)): InertiaForm<TForm> {
+  const isDataFunction = typeof data === 'function'
+  const resolveData = () => (isDataFunction ? (data as () => TForm)() : (data ?? ({} as TForm)))
+  const resolved = resolveData()
+  let canonicalData = cloneDeep(resolved)
+  let canonicalDefaults = cloneDeep(resolved)
+  let transform: UseFormTransformCallback<TForm> = (values) => values
+  let disposed = false
+  let defaultsCalledInOnSuccess = false
+  let recentlySuccessfulTimeout: ReturnType<typeof setTimeout> | undefined
+
+  const [state, setState] = createStore<FormState<TForm>>({
+    data: cloneDeep(canonicalData),
+    defaults: cloneDeep(canonicalDefaults),
+    errors: {} as FormDataErrors<TForm>,
+    processing: false,
+    progress: null,
+    wasSuccessful: false,
+    recentlySuccessful: false,
+  })
+
+  onCleanup(() => {
+    disposed = true
+    clearTimeout(recentlySuccessfulTimeout)
+  })
+
+  const projectData = () => {
+    setState((draft) => {
+      draft.data = cloneDeep(canonicalData)
+    })
+  }
+
+  const projectDefaults = () => {
+    setState((draft) => {
+      draft.defaults = cloneDeep(canonicalDefaults)
+    })
+  }
+
+  const setData = ((keyOrData: FormDataKeys<TForm> | ((previousData: TForm) => TForm) | Partial<TForm>, value?: unknown) => {
+    if (typeof keyOrData === 'string') {
+      canonicalData = set(cloneDeep(canonicalData), keyOrData, value)
+    } else if (typeof keyOrData === 'function') {
+      canonicalData = cloneDeep(keyOrData(cloneDeep(canonicalData)))
+    } else {
+      canonicalData = cloneDeep(keyOrData) as TForm
+    }
+
+    projectData()
+  }) as SetDataAction<TForm>
+
+  const setDefaults = ((fieldOrFields?: FormDataKeys<TForm> | Partial<TForm>, value?: unknown) => {
+    if (isDataFunction) {
+      throw new Error('You cannot call `setDefaults()` when using a function to define your form data.')
+    }
+
+    defaultsCalledInOnSuccess = true
+
+    if (fieldOrFields === undefined) {
+      canonicalDefaults = cloneDeep(canonicalData)
+    } else if (typeof fieldOrFields === 'string') {
+      canonicalDefaults = set(cloneDeep(canonicalDefaults), fieldOrFields, value)
+    } else {
+      canonicalDefaults = Object.assign(cloneDeep(canonicalDefaults), cloneDeep(fieldOrFields))
+    }
+
+    projectDefaults()
+  }) as InertiaForm<TForm>['setDefaults']
+
+  const reset = (...fields: FormDataKeys<TForm>[]) => {
+    const resetData = isDataFunction ? cloneDeep(resolveData()) : cloneDeep(canonicalDefaults)
+
+    if (fields.length === 0) {
+      canonicalData = resetData
+      if (isDataFunction) {
+        canonicalDefaults = cloneDeep(resetData)
+        projectDefaults()
+      }
+    } else {
+      const next = cloneDeep(canonicalData)
+      fields.forEach((field) => {
+        if (!has(resetData, field)) return
+        const value = cloneDeep(get(resetData, field))
+        set(next, field, value)
+        if (isDataFunction) set(canonicalDefaults, field, cloneDeep(value))
+      })
+      canonicalData = next
+      if (isDataFunction) projectDefaults()
+    }
+
+    projectData()
+  }
+
+  const setError = ((fieldOrErrors: FormDataKeys<TForm> | FormDataErrors<TForm>, value?: ErrorValue) => {
+    setState((draft) => {
+      Object.assign(draft.errors, typeof fieldOrErrors === 'string' ? { [fieldOrErrors]: value } : fieldOrErrors)
+    })
+  }) as InertiaForm<TForm>['setError']
+
+  const clearErrors = (...fields: FormDataKeys<TForm>[]) => {
+    setState((draft) => {
+      if (fields.length === 0) {
+        draft.errors = {} as FormDataErrors<TForm>
+        return
+      }
+
+      fields.forEach((field) => delete (draft.errors as Record<string, ErrorValue>)[field])
+    })
+  }
+
+  const resetAndClearErrors = (...fields: FormDataKeys<TForm>[]) => {
+    reset(...fields)
+    clearErrors(...fields)
+  }
+
+  const updateLifecycle = (update: (draft: FormState<TForm>) => void) => {
+    if (disposed) return
+    setState(update)
+    flush()
+  }
+
+  const markSuccessful = () => {
+    if (disposed) return
+
+    updateLifecycle((draft) => {
+      draft.errors = {} as FormDataErrors<TForm>
+      draft.wasSuccessful = true
+      draft.recentlySuccessful = true
+    })
+
+    clearTimeout(recentlySuccessfulTimeout)
+    recentlySuccessfulTimeout = setTimeout(() => {
+      updateLifecycle((draft) => {
+        draft.recentlySuccessful = false
+      })
+    }, config.get('form.recentlySuccessfulDuration'))
+  }
+
+  const post = (url: string, options: UseFormSubmitOptions = {}) => {
+    defaultsCalledInOnSuccess = false
+
+    const visitOptions: VisitOptions = {
+      ...options,
+      onCancelToken: (token) => options.onCancelToken?.(token),
+      onBefore: (visit) => {
+        updateLifecycle((draft) => {
+          draft.wasSuccessful = false
+          draft.recentlySuccessful = false
+        })
+        clearTimeout(recentlySuccessfulTimeout)
+        return options.onBefore?.(visit)
+      },
+      onStart: (visit) => {
+        updateLifecycle((draft) => {
+          draft.processing = true
+        })
+        return options.onStart?.(visit)
+      },
+      onProgress: (event) => {
+        updateLifecycle((draft) => {
+          draft.progress = event ?? null
+        })
+        return options.onProgress?.(event)
+      },
+      onSuccess: async (page) => {
+        markSuccessful()
+        const result = options.onSuccess ? await options.onSuccess(page) : undefined
+
+        if (!disposed && !defaultsCalledInOnSuccess) {
+          canonicalDefaults = cloneDeep(canonicalData)
+          projectDefaults()
+          flush()
+        }
+
+        return result
+      },
+      onError: (errors) => {
+        if (!disposed) {
+          updateLifecycle((draft) => {
+            draft.errors = cloneDeep(errors) as FormDataErrors<TForm>
+          })
+        }
+        return options.onError?.(errors)
+      },
+      onCancel: () => options.onCancel?.(),
+      onFinish: (visit) => {
+        updateLifecycle((draft) => {
+          draft.processing = false
+          draft.progress = null
+        })
+        return options.onFinish?.(visit)
+      },
+    }
+
+    const transformedData = transform(cloneDeep(canonicalData)) as RequestPayload
+
+    router.post(url, transformedData, visitOptions)
+  }
+
+  const form: InertiaForm<TForm> = {
+    get data() {
+      return state.data
+    },
+    get isDirty() {
+      void state.data
+      void state.defaults
+      return !isEqual(canonicalData, canonicalDefaults)
+    },
+    get errors() {
+      return state.errors
+    },
+    get hasErrors() {
+      return Object.keys(state.errors).length > 0
+    },
+    get processing() {
+      return state.processing
+    },
+    get progress() {
+      return state.progress
+    },
+    get wasSuccessful() {
+      return state.wasSuccessful
+    },
+    get recentlySuccessful() {
+      return state.recentlySuccessful
+    },
+    setData,
+    transform(callback) {
+      transform = callback
+    },
+    setDefaults,
+    reset,
+    clearErrors,
+    resetAndClearErrors,
+    setError,
+    post,
+  }
+
+  return form
+}
