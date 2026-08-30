@@ -126,6 +126,15 @@ export default function InfiniteScroll(props: InfiniteScrollProps): Element {
     infiniteScroll.elementManager.processServerLoadedElements(
       infiniteScroll.dataManager.getLastLoadedPage(),
     )
+
+    if (props.autoScroll ?? !!props.reverse) {
+      if (scrollableParent) {
+        scrollableParent.scrollTo({ top: scrollableParent.scrollHeight, behavior: 'instant' })
+      } else {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' })
+      }
+    }
+
     if (autoLoad()) infiniteScroll.elementManager.enableTriggers()
     props.ref?.(exposed)
 
@@ -251,21 +260,26 @@ export default function InfiniteScroll(props: InfiniteScrollProps): Element {
     'children',
   )
 
-  return (
-    <>
-      {!props.startElement && (
-        <div ref={(element) => (defaultStartElement = element)}>{previousContent()}</div>
-      )}
-      <Dynamic
-        component={props.as ?? 'div'}
-        {...htmlProps}
-        ref={(element: HTMLElement) => (defaultItemsElement = element)}
-      >
-        {items()}
-      </Dynamic>
-      {!props.endElement && <div ref={(element) => (defaultEndElement = element)}>{nextContent()}</div>}
-    </>
+  const start = !props.startElement && (
+    <div ref={(element) => (defaultStartElement = element)}>{previousContent()}</div>
   )
+  const itemContainer = (
+    <Dynamic
+      component={props.as ?? 'div'}
+      {...htmlProps}
+      ref={(element: HTMLElement) => (defaultItemsElement = element)}
+    >
+      {items()}
+    </Dynamic>
+  )
+  const end = !props.endElement && (
+    <div ref={(element) => (defaultEndElement = element)}>{nextContent()}</div>
+  )
+  const elements = createMemo(() =>
+    props.reverse ? [end, itemContainer, start] : [start, itemContainer, end],
+  )
+
+  return <>{elements()}</>
 }
 
 export type { InfiniteScrollRef }

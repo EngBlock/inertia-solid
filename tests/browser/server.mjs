@@ -41,7 +41,11 @@ const routes = {
   '/infinite-scroll/custom': { component: 'InfiniteScroll', props: { mode: 'custom' } },
   '/infinite-scroll/manual': { component: 'InfiniteScroll', props: { mode: 'manual' } },
   '/infinite-scroll/manual-after': { component: 'InfiniteScroll', props: { mode: 'manual-after' } },
+  '/infinite-scroll/manual-reverse': { component: 'InfiniteScroll', props: { mode: 'reverse-manual' } },
   '/infinite-scroll/preserve-url': { component: 'InfiniteScroll', props: { mode: 'preserve-url' } },
+  '/infinite-scroll/remember-state': { component: 'InfiniteScroll', props: { mode: 'history' } },
+  '/infinite-scroll/reverse': { component: 'InfiniteScroll', props: { mode: 'reverse' } },
+  '/infinite-scroll/trigger-both': { component: 'InfiniteScroll', props: { mode: 'trigger-both' } },
   '/use-http': { component: 'UseHttp/Default', props: {} },
   '/when-visible': { component: 'WhenVisible', props: {} },
 }
@@ -58,9 +62,13 @@ function pageFor(url) {
 
   if (!route) return null
 
+  const routeProps =
+    route.props.mode === 'manual-after' && url.searchParams.get('reverse') === '1'
+      ? { ...route.props, mode: 'reverse-manual-after' }
+      : route.props
   const page = {
     component: route.component,
-    props: route.props,
+    props: routeProps,
     url: `${url.pathname}${url.search}`,
     version: null,
     clearHistory: false,
@@ -72,14 +80,15 @@ function pageFor(url) {
 
   const currentPage = Math.min(3, Math.max(1, Number(url.searchParams.get('page') ?? 1)))
   const firstUser = (currentPage - 1) * 5 + 1
+  const reverse = routeProps.mode.startsWith('reverse')
   const users = Array.from({ length: 5 }, (_, index) => {
-    const id = firstUser + index
+    const id = reverse ? 16 - firstUser - index : firstUser + index
     return { id, name: `User ${id}` }
   })
 
   return {
     ...page,
-    props: { ...route.props, users: { data: users } },
+    props: { ...routeProps, users: { data: users } },
     mergeProps: ['users.data'],
     scrollProps: {
       users: {
@@ -303,6 +312,14 @@ createServer(async (request, response) => {
 
       if (url.pathname.startsWith('/infinite-scroll/')) {
         await new Promise((resolve) => setTimeout(resolve, 200))
+        const mergeIntent = request.headers['x-inertia-infinite-scroll-merge-intent']
+        if (mergeIntent === 'prepend') {
+          inertiaPage = {
+            ...inertiaPage,
+            mergeProps: undefined,
+            prependProps: ['users.data'],
+          }
+        }
       }
 
       if (url.pathname === '/when-visible') {
