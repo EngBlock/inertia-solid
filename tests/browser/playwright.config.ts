@@ -11,6 +11,11 @@ const ports = {
   solid: { csr: 13721, ssr: 13722 },
 } as const
 const selectedPorts = ports[adapter as keyof typeof ports]
+const browsers = [
+  { name: 'chromium', device: devices['Desktop Chrome'] },
+  { name: 'webkit', device: devices['Desktop Safari'] },
+] as const
+const modes = ['csr', 'ssr'] as const
 
 export default defineConfig({
   testDir: '.',
@@ -21,16 +26,12 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
   timeout: 10_000,
   expect: { timeout: 5_000 },
-  projects: [
-    {
-      name: `${adapter}-csr`,
-      use: { ...devices['Desktop Chrome'], baseURL: `http://127.0.0.1:${selectedPorts.csr}` },
-    },
-    {
-      name: `${adapter}-ssr`,
-      use: { ...devices['Desktop Chrome'], baseURL: `http://127.0.0.1:${selectedPorts.ssr}` },
-    },
-  ],
+  projects: browsers.flatMap(({ name, device }) =>
+    modes.map((mode) => ({
+      name: `${adapter}-${name}-${mode}`,
+      use: { ...device, baseURL: `http://127.0.0.1:${selectedPorts[mode]}` },
+    })),
+  ),
   webServer: [
     {
       command: `PORT=${selectedPorts.csr} SSR=false node server.mjs`,

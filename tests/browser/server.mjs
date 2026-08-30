@@ -30,6 +30,8 @@ const routes = {
   '/form-helper/remember': { component: 'FormHelper/Remember', props: {} },
   '/form-helper/set-data-then-post': { component: 'FormHelper/SetDataThenPost', props: {} },
   '/layout-props/basic': { component: 'LayoutProps/Basic', props: {} },
+  '/layout-props/callback': { component: 'LayoutProps/Callback', props: { message: 'resolved' } },
+  '/layout-props/render-function': { component: 'LayoutProps/RenderFunction', props: {} },
   '/layout-props/named-dynamic': { component: 'LayoutProps/NamedDynamic', props: { title: 'Page Title' } },
   '/layout-props/persistent-a': { component: 'LayoutProps/PersistentA', props: {} },
   '/layout-props/persistent-b': { component: 'LayoutProps/PersistentB', props: {} },
@@ -112,7 +114,10 @@ async function readRequestData(request) {
   if (contentType.includes('application/json')) return JSON.parse(buffer.toString('utf8'))
 
   if (contentType.includes('multipart/form-data')) {
-    const boundary = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/)?.slice(1).find(Boolean)
+    const boundary = contentType
+      .match(/boundary=(?:"([^"]+)"|([^;]+))/)
+      ?.slice(1)
+      .find(Boolean)
     if (!boundary) return {}
 
     const data = {}
@@ -304,9 +309,7 @@ createServer(async (request, response) => {
         await new Promise((resolve) => setTimeout(resolve, 150))
         inertiaPage = {
           ...page,
-          props: data.fail
-            ? { count: 1, errors: { fail: 'Optimistic update failed.' } }
-            : { count: 2, errors: {} },
+          props: data.fail ? { count: 1, errors: { fail: 'Optimistic update failed.' } } : { count: 2, errors: {} },
         }
       }
 
@@ -324,7 +327,9 @@ createServer(async (request, response) => {
 
       if (url.pathname === '/when-visible') {
         await new Promise((resolve) => setTimeout(resolve, 250))
-        const only = String(request.headers['x-inertia-partial-data'] ?? '').split(',').filter(Boolean)
+        const only = String(request.headers['x-inertia-partial-data'] ?? '')
+          .split(',')
+          .filter(Boolean)
         const props = {}
 
         if (only.includes('foo')) props.foo = 'loaded'
@@ -353,8 +358,14 @@ createServer(async (request, response) => {
       })
       .end(await documentFor({ ...page, url: `${url.pathname}${url.search}` }))
   } catch (error) {
+    if (error?.code === 'ECONNRESET' || error?.message === 'aborted') return
+
     console.error(error)
-    response.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' }).end('Internal server error')
+    if (!response.headersSent) {
+      response.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' }).end('Internal server error')
+    } else {
+      response.destroy(error)
+    }
   }
 }).listen(port, '127.0.0.1', () => {
   console.log(`Solid browser fixture (${ssr ? 'SSR' : 'CSR'}) listening on http://127.0.0.1:${port}`)

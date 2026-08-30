@@ -61,6 +61,20 @@ test.describe('layout props', () => {
     expect(await page.evaluate(() => window._inertia_alternate_layout_mounts)).toBe(1)
   })
 
+  test('resolves layout callbacks from current page props', async ({ page }) => {
+    await page.goto('/layout-props/callback')
+
+    await expect(page.getByRole('heading', { name: 'Callback page: resolved' })).toBeVisible()
+    await expect(page.locator('.app-title')).toHaveText('Callback resolved')
+    await expect(page.locator('.sidebar')).not.toBeVisible()
+  })
+
+  test('applies Solid render-function layouts around the page element', async ({ page }) => {
+    await page.goto('/layout-props/render-function')
+
+    await expect(page.getByTestId('render-function-layout')).toContainText('Render function page')
+  })
+
   test('follows preserve-state behavior independently of persistent layouts', async ({ page }) => {
     await page.goto('/layout-props/stateful-1')
     await page.getByRole('button', { name: 'Page count 0' }).click()

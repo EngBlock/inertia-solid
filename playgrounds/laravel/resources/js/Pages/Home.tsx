@@ -30,7 +30,7 @@ async function getJson<T>(url: string): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export default function Home(props: HomeProps) {
+function Home(props: HomeProps) {
   const page = usePage<HomeProps>()
   const [topic, setTopic] = createSignal('adapter')
   const [pulseSequence, setPulseSequence] = createSignal(1)
@@ -39,14 +39,17 @@ export default function Home(props: HomeProps) {
   const pulse = createMemo(async () => getJson<Pulse>(`/async/pulse/${pulseSequence()}`))
 
   return (
-    <AppLayout>
+    <>
       <Head
         title="Home"
         tags={[
           {
             tag: 'meta',
             headKey: 'description',
-            attrs: { name: 'description', content: 'Laravel, Inertia, and Solid working together.' },
+            attrs: {
+              name: 'description',
+              content: 'Laravel, Inertia, and Solid working together.',
+            },
           },
         ]}
       />
@@ -125,6 +128,10 @@ export default function Home(props: HomeProps) {
           </article>
         </div>
       </section>
-    </AppLayout>
+    </>
   )
 }
+
+Home.layout = { app: AppLayout }
+
+export default Home

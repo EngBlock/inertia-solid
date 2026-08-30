@@ -8,12 +8,19 @@ export default function Basic() {
   return (
     <div>
       <h2>Basic Layout Props Page</h2>
-      <button type="button" onClick={() => {
-        const next = !visible()
-        setVisible(next)
-        setLayoutProps({ showSidebar: next })
-      }}>Toggle Sidebar</button>
-      <button type="button" onClick={() => setLayoutProps({ title: 'Updated Title' })}>Update Title</button>
+      <button
+        type="button"
+        onClick={() => {
+          const next = !visible()
+          setVisible(next)
+          setLayoutProps({ showSidebar: next })
+        }}
+      >
+        Toggle Sidebar
+      </button>
+      <button type="button" onClick={() => setLayoutProps({ title: 'Updated Title' })}>
+        Update Title
+      </button>
     </div>
   )
 }

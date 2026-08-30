@@ -1,10 +1,4 @@
-import {
-  HttpCancelledError,
-  HttpResponseError,
-  http,
-  type HttpRequestConfig,
-  type HttpResponse,
-} from '@inertiajs/core'
+import { HttpCancelledError, HttpResponseError, http, type HttpRequestConfig, type HttpResponse } from '@inertiajs/core'
 import { createRoot, flush } from 'solid-js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import useHttp from '../src/useHttp'
@@ -121,12 +115,7 @@ describe('useHttp', () => {
     requests[0]!.resolve(response({ saved: true }))
 
     await expect(promise).resolves.toEqual({ saved: true })
-    expect(events).toEqual([
-      'start:true',
-      'progress:50',
-      'success:true:metadata',
-      'finish:false',
-    ])
+    expect(events).toEqual(['start:true', 'progress:50', 'success:true:metadata', 'finish:false'])
     expect(form.progress).toBeNull()
     expect(form.recentlySuccessful).toBe(true)
     vi.advanceTimersByTime(2_000)

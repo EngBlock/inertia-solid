@@ -1,6 +1,17 @@
 # Laravel Inertia Solid playground
 
-A small Laravel application wired to the adapter in the repository root through the pnpm workspace. It exercises Inertia page responses, Solid page resolution and props, `Head`, `Link`, hover prefetching, and reactive async memos backed by Laravel JSON endpoints.
+A Laravel application wired to the repository's adapter through the pnpm workspace. It is a real consumer build rather than an adapter-internal fixture.
+
+The home and about pages exercise page resolution, props, `Head`, `Link`, prefetching, Solid-owned async work, and persistent layouts. `/workflows` contains intentionally small examples of:
+
+- helper-driven `useForm` visits;
+- native `<Form>` submission with Laravel Precognition;
+- direct JSON submission through `useHttp`;
+- lazy partial reloads through `WhenVisible`;
+- manual paginated merging through `InfiniteScroll`; and
+- reactive named layout props through `setLayoutProps`.
+
+The examples read store properties and accessors inside JSX so that Solid tracks them. They do not eagerly destructure reactive form or page state.
 
 ## Initial setup
 
@@ -34,7 +45,7 @@ Start Vite in another:
 pnpm playground:dev
 ```
 
-Then open <http://localhost:8000>.
+Then open <http://localhost:8000/workflows>.
 
 ## Verify
 
@@ -42,3 +53,5 @@ Then open <http://localhost:8000>.
 pnpm playground:build
 pnpm playground:test
 ```
+
+The feature suite verifies the Inertia pages, scroll metadata, helper/direct endpoints, validation, and Precognition handshake. The Vite build verifies that the playground consumes the generated workspace package declarations and browser bundle.

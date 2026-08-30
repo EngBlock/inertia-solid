@@ -17,11 +17,7 @@ export interface HeadProps {
 }
 
 const escapeAttribute = (value: unknown): string =>
-  String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('"', '&quot;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
+  String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
 
 const escapeText = (value: unknown): string =>
   String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
@@ -33,9 +29,9 @@ function serializeTag(descriptor: HeadTagDescriptor): string {
     ...descriptor.attrs,
     'data-inertia': descriptor.headKey ?? '',
   }
-  const serializedAttributes = (Object.entries(attributes) as Array<
-    [string, string | number | boolean | null | undefined]
-  >)
+  const serializedAttributes = (
+    Object.entries(attributes) as Array<[string, string | number | boolean | null | undefined]>
+  )
     .filter(([, value]) => value !== false && value !== null && value !== undefined)
     .map(([name, value]) => (value === true ? name : `${name}="${escapeAttribute(value)}"`))
     .join(' ')

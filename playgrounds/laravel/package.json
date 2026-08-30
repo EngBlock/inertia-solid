@@ -1,26 +1,26 @@
 {
-    "$schema": "https://www.schemastore.org/package.json",
-    "name": "inertia-solid-playground",
-    "private": true,
-    "type": "module",
-    "scripts": {
-        "build": "vite build",
-        "dev": "vite",
-        "test": "php artisan test"
-    },
-    "dependencies": {
-        "@engblock/inertia-solid": "workspace:*",
-        "@inertiajs/core": "^3.7.0",
-        "@solidjs/web": "2.0.0-rc.0",
-        "solid-js": "2.0.0-rc.0"
-    },
-    "devDependencies": {
-        "@solidjs/vite-plugin": "^3.0.0-next.36",
-        "@tailwindcss/vite": "^4.0.0",
-        "@types/node": "^26.4.0",
-        "laravel-vite-plugin": "^3.1",
-        "tailwindcss": "^4.0.0",
-        "typescript": "^6.0.3",
-        "vite": "^8.0.0"
-    }
+  "$schema": "https://www.schemastore.org/package.json",
+  "name": "inertia-solid-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "test": "php artisan test"
+  },
+  "dependencies": {
+    "@engblock/inertia-solid": "workspace:*",
+    "@inertiajs/core": "^3.7.0",
+    "@solidjs/web": "2.0.0-rc.0",
+    "solid-js": "2.0.0-rc.0"
+  },
+  "devDependencies": {
+    "@solidjs/vite-plugin": "^3.0.0-next.36",
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/node": "^26.4.0",
+    "laravel-vite-plugin": "^3.1",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.0"
+  }
 }

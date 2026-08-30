@@ -5,24 +5,26 @@ type AboutProps = {
   features: string[]
 }
 
-export default function About(props: AboutProps) {
+function About(props: AboutProps) {
   return (
-    <AppLayout>
+    <main class="content">
       <Head title="About" />
 
-      <main class="content">
-        <p class="eyebrow">Adapter smoke test</p>
-        <h1>Navigation stayed in the SPA.</h1>
-        <p class="lede">This route exercises page resolution, reactive props, head updates, and Inertia links.</p>
-        <ul class="feature-list">
-          {props.features.map((feature) => (
-            <li>{feature}</li>
-          ))}
-        </ul>
-        <Link href="/" class="button">
-          Back home
-        </Link>
-      </main>
-    </AppLayout>
+      <p class="eyebrow">Adapter smoke test</p>
+      <h1>Navigation stayed in the SPA.</h1>
+      <p class="lede">This route exercises page resolution, reactive props, head updates, and Inertia links.</p>
+      <ul class="feature-list">
+        {props.features.map((feature) => (
+          <li>{feature}</li>
+        ))}
+      </ul>
+      <Link href="/" class="button">
+        Back home
+      </Link>
+    </main>
   )
 }
+
+About.layout = { app: AppLayout }
+
+export default About

@@ -40,9 +40,7 @@ test('automatically loads and merges each forward page once', async ({ page }) =
   await expect(page.locator('[data-user-id="6"]')).toHaveAttribute('data-infinite-scroll-page', '2')
 })
 
-test('reverse mode renders in timeline order and begins at the bottom without an initial request', async ({
-  page,
-}) => {
+test('reverse mode renders in timeline order and begins at the bottom without an initial request', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 420 })
   const requests = listenForInfiniteScroll(page)
   await page.goto('/infinite-scroll/reverse')
@@ -68,9 +66,7 @@ test('prepends previous pages without moving the visible content', async ({ page
 
   await expect(page.getByText('User 1', { exact: true })).toBeVisible()
   await expect(page.getByText('Previous loading: no')).toBeVisible()
-  await expect
-    .poll(async () => (await page.locator('[data-user-id="6"]').boundingBox())?.y)
-    .toBeCloseTo(before!.y, 0)
+  await expect.poll(async () => (await page.locator('[data-user-id="6"]').boundingBox())?.y).toBeCloseTo(before!.y, 0)
   await expect(page.locator('[data-user-id]')).toHaveCount(15)
   await expect
     .poll(() => page.locator('[data-user-id]').evaluateAll((items) => items.map((item) => item.textContent)))
@@ -132,11 +128,7 @@ test('restores merged pages, URL, page tags, and scroll through browser history'
   await page.locator('[data-user-id="8"]').evaluate((element) => element.scrollIntoView({ block: 'center' }))
   await expect(page).toHaveURL(/page=2/)
   await expect
-    .poll(() =>
-      page.evaluate(
-        () => window.history.state?.documentScrollPosition?.top === window.scrollY,
-      ),
-    )
+    .poll(() => page.evaluate(() => window.history.state?.documentScrollPosition?.top === window.scrollY))
     .toBe(true)
   const url = page.url()
   const userPosition = await page.locator('[data-user-id="8"]').boundingBox()
@@ -168,11 +160,11 @@ test('restores merged pages, URL, page tags, and scroll through browser history'
   expect(requests).toHaveLength(0)
 })
 
-test('renders deterministic reverse slot state and hydrates without an initial request', async (
-  { page, request },
-  testInfo,
-) => {
-  test.skip(!testInfo.project.name.endsWith('-ssr'))
+test('renders deterministic reverse slot state and hydrates without an initial request', async ({
+  page,
+  request,
+}, testInfo) => {
+  test.skip(!testInfo.project.name.endsWith('-ssr'), 'Raw server markup is only available in SSR mode.')
 
   const response = await request.get('/infinite-scroll/manual-reverse?page=2')
   const html = await response.text()
@@ -193,17 +185,13 @@ test('tracks the visible page in the URL unless preservation is requested', asyn
   await page.goto('/infinite-scroll/automatic')
   await scrollToBottom(page)
   await expect(page.getByText('User 10', { exact: true })).toBeVisible()
-  await page
-    .locator('[data-user-id="8"]')
-    .evaluate((element) => element.scrollIntoView({ block: 'start' }))
+  await page.locator('[data-user-id="8"]').evaluate((element) => element.scrollIntoView({ block: 'start' }))
   await expect(page).toHaveURL(/page=2/)
 
   await page.goto('/infinite-scroll/preserve-url')
   await scrollToBottom(page)
   await expect(page.getByText('User 10', { exact: true })).toBeVisible()
-  await page
-    .locator('[data-user-id="8"]')
-    .evaluate((element) => element.scrollIntoView({ block: 'start' }))
+  await page.locator('[data-user-id="8"]').evaluate((element) => element.scrollIntoView({ block: 'start' }))
   await page.waitForTimeout(150)
   await expect(page).toHaveURL('/infinite-scroll/preserve-url')
 })
@@ -227,9 +215,7 @@ test('supports manual actions, state, programmatic access, and remounting', asyn
   expect(requests).toHaveLength(2)
 })
 
-test('switches from automatic to manual mode after the configured request count', async ({
-  page,
-}) => {
+test('switches from automatic to manual mode after the configured request count', async ({ page }) => {
   await page.goto('/infinite-scroll/manual-after')
   await expect(page.getByText('Manual mode: no')).toBeVisible()
 
@@ -240,9 +226,7 @@ test('switches from automatic to manual mode after the configured request count'
   await expect(page.getByText('User 15', { exact: true })).toBeVisible()
 })
 
-test('supports a custom wrapper, items selector, end trigger, and scroll container', async ({
-  page,
-}) => {
+test('supports a custom wrapper, items selector, end trigger, and scroll container', async ({ page }) => {
   const requests = listenForInfiniteScroll(page)
   await page.goto('/infinite-scroll/custom')
 

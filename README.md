@@ -3,7 +3,7 @@
 A community SolidJS 2 adapter for [Inertia.js](https://inertiajs.com/).
 
 > [!WARNING]
-> This package is an early alpha. The runtime spine, persistent layouts, links, head descriptors, deferred props, polling, prefetch state, remembered signals, Inertia forms, Laravel Precognition, and direct HTTP forms are present. Visibility and infinite scroll are still being implemented. Do not use this release in production yet.
+> This package is an early alpha. The parity matrix is a release gate, not a claim of production stability. Do not use this release in production yet.
 
 ## Design
 
@@ -11,7 +11,7 @@ Inertia owns remote page state: visits, history, deferred requests, prefetching,
 
 The adapter intentionally does not depend on Solid Router or create a second query cache. An Inertia page snapshot is synchronous; native Solid async belongs inside page components.
 
-See [docs/architecture.md](docs/architecture.md) for the complete exploration and parity plan.
+See [docs/architecture.md](docs/architecture.md) for the complete exploration and [docs/parity.md](docs/parity.md) for supported versions, intentional Solid differences, and release gates.
 
 ## Install
 
@@ -19,7 +19,7 @@ See [docs/architecture.md](docs/architecture.md) for the complete exploration an
 pnpm add @engblock/inertia-solid @inertiajs/core solid-js @solidjs/web
 ```
 
-Solid 2 is currently an RC, so applications should use compatible `solid-js` and `@solidjs/web` versions.
+The supported peer ranges are `@inertiajs/core@^3.7.0`, `solid-js@^2.0.0-rc.0`, and `@solidjs/web@^2.0.0-rc.0`. Keep both Solid packages on matching versions. See [the parity and support guide](docs/parity.md) for intentional Solid syntax differences and lifecycle guidance.
 
 ## Client setup
 
@@ -58,7 +58,9 @@ export default function Users() {
 
   return (
     <main>
-      <Link href="/users" prefetch="hover">Users</Link>
+      <Link href="/users" prefetch="hover">
+        Users
+      </Link>
       <For each={page.props.users}>{(user) => <p>{user.name}</p>}</For>
     </main>
   )
@@ -137,11 +139,7 @@ function FieldError() {
 
 let formRef: FormComponentRef<{ name: string }> | undefined
 
-<Form<{ name: string }>
-  action="/users"
-  method="post"
-  ref={(form) => (formRef = form)}
->
+;<Form<{ name: string }> action="/users" method="post" ref={(form) => (formRef = form)}>
   {(form) => (
     <>
       <input name="name" />
@@ -181,7 +179,7 @@ pnpm install
 pnpm check
 ```
 
-The browser parity harness runs the same baseline navigation in CSR and SSR/hydration modes. Focused commands are `pnpm test:browser:csr` and `pnpm test:browser:ssr`; its adapter selector, ports, build steps, and fixture layout are documented in [`tests/browser/README.md`](tests/browser/README.md).
+The browser parity harness runs applicable shared behavior in CSR and SSR/hydration modes on Chromium and WebKit. Firefox is currently excluded because Playwright 1.58's bundled runner hangs before page creation; no Firefox compatibility claim is made. Focused commands are `pnpm test:browser:csr` and `pnpm test:browser:ssr`; harness details are documented in [`tests/browser/README.md`](tests/browser/README.md).
 
 ## Laravel playground
 
@@ -214,15 +212,19 @@ Implemented:
 - Typed `useForm` visit lifecycle, remembrance, cancellation, optimistic updates, and Precognition
 - Native `Form` with Precognition, stable form context and refs, and typed `createForm<T>()`
 - Typed `useHttp` direct JSON and upload requests with cancellation and optimistic updates
+- `WhenVisible` partial reloads with owner-bound observer and request cleanup
+- Forward, reverse, manual, and history-aware `InfiniteScroll`
 - Owner-safe persistent and named layouts
 - Reactive `setLayoutProps` and `resetLayoutProps`
 - Core/config/server exports
 
-Next priorities:
+Release gates:
 
-1. `WhenVisible` and `InfiniteScroll`
-2. Full Inertia shared Playwright suite and browser matrix
-3. Solid ambient-head and async SSR integration
+1. Unit, public-type, client build, SSR build, declaration, and SSR smoke verification
+2. Applicable shared Playwright behavior in CSR and SSR across Chromium and WebKit
+3. Laravel workspace-consumer build and feature tests
+
+Solid ambient-head inspection and streaming async SSR remain outside the current adapter contract.
 
 ## License
 

@@ -28,22 +28,25 @@ export function createPageFacade(read: Accessor<Page>): Page {
 }
 
 export function createPropsFacade(read: Accessor<Page>): Page['props'] {
-  return new Proxy({}, {
-    get(_target, property) {
-      return Reflect.get(read().props, property)
+  return new Proxy(
+    {},
+    {
+      get(_target, property) {
+        return Reflect.get(read().props, property)
+      },
+      has(_target, property) {
+        return Reflect.has(read().props, property)
+      },
+      ownKeys() {
+        return Reflect.ownKeys(read().props)
+      },
+      getOwnPropertyDescriptor(_target, property) {
+        const descriptor = Reflect.getOwnPropertyDescriptor(read().props, property)
+        return descriptor ? { ...descriptor, configurable: true } : undefined
+      },
+      set() {
+        throw new TypeError('Inertia page props are read-only')
+      },
     },
-    has(_target, property) {
-      return Reflect.has(read().props, property)
-    },
-    ownKeys() {
-      return Reflect.ownKeys(read().props)
-    },
-    getOwnPropertyDescriptor(_target, property) {
-      const descriptor = Reflect.getOwnPropertyDescriptor(read().props, property)
-      return descriptor ? { ...descriptor, configurable: true } : undefined
-    },
-    set() {
-      throw new TypeError('Inertia page props are read-only')
-    },
-  }) as Page['props']
+  ) as Page['props']
 }

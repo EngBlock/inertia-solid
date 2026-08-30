@@ -11,7 +11,10 @@ export default function Lifecycle() {
   const form = useForm<FormData>({ name: 'Ada', password: '' })
   const remembered = useForm<FormData>('profile', { name: 'Ada', password: '' })
   const endpoint = useForm<FormData>(wayfinder, { name: 'Ada', password: '' })
-  const dynamicEndpoint = useForm<FormData>(() => wayfinder, () => ({ name: 'Ada', password: '' }))
+  const dynamicEndpoint = useForm<FormData>(
+    () => wayfinder,
+    () => ({ name: 'Ada', password: '' }),
+  )
 
   form.get('/users', { preserveState: true })
   form.post('/users', { errorBag: 'profile', invalidateCacheTags: ['users'] })

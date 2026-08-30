@@ -1,6 +1,7 @@
 import {
   createHeadManager,
   isPropsObject,
+  isPropsObjectOrCallback,
   normalizeLayouts,
   resolveServerHead,
   router,
@@ -32,7 +33,7 @@ import {
   type LayoutPropsSnapshot,
 } from './layoutProps'
 import { createPageFacade, createPropsFacade } from './pageFacade'
-import type { SolidComponent } from './types'
+import type { LayoutFunction, SolidComponent } from './types'
 
 export interface InertiaAppProps<SharedProps extends PageProps = PageProps> {
   children?: (options: { Component: SolidComponent; props: PageProps; key: object }) => Element
@@ -60,36 +61,63 @@ type PageEntry = {
 
 const isComponent = (value: unknown): value is SolidComponent => typeof value === 'function'
 
-function normalizePageLayouts(
+const isLayoutResolver = (value: unknown): value is LayoutFunction => {
+  if (typeof value !== 'function') return false
+
+  const fn = value as Function
+  return fn.length <= 1 && typeof fn.prototype === 'undefined' && !/^[A-Z]/.test(fn.name)
+}
+
+type ResolvedPageLayout = {
+  definitions: LayoutDefinition<SolidComponent>[]
+  render?: LayoutFunction
+}
+
+function resolvePageLayout(
   component: SolidComponent | undefined,
   page: Page,
   defaultLayout: InertiaAppProps['defaultLayout'],
-): LayoutDefinition<SolidComponent>[] {
-  if (!component) return []
+): ResolvedPageLayout {
+  if (!component) return { definitions: [] }
 
   const layout = component.layout
-  let effectiveLayout = layout ?? defaultLayout?.(page.component, page)
+  let effectiveLayout: unknown
   let callbackProps: Record<string, unknown> | undefined
 
-  if (isPropsObject(layout, isComponent)) {
+  if (isLayoutResolver(layout)) {
+    const result = layout(page.props)
+    const resolvedDefinitions = normalizeLayouts(result, isComponent)
+
+    if (resolvedDefinitions.length > 0) {
+      effectiveLayout = result
+    } else if (typeof Node !== 'undefined' && result instanceof Node) {
+      return { definitions: [], render: layout }
+    } else if (defaultLayout && isPropsObjectOrCallback(result, isComponent)) {
+      effectiveLayout = defaultLayout(page.component, page)
+      callbackProps = result as Record<string, unknown>
+    } else {
+      return { definitions: [], render: layout }
+    }
+  } else if (isPropsObject(layout, isComponent)) {
     effectiveLayout = defaultLayout?.(page.component, page)
     callbackProps = layout as Record<string, unknown>
+  } else {
+    effectiveLayout = layout ?? defaultLayout?.(page.component, page)
   }
 
   const definitions = normalizeLayouts(effectiveLayout, isComponent)
 
-  return callbackProps
-    ? definitions.map((definition) => ({
-        ...definition,
-        props: { ...definition.props, ...callbackProps },
-      }))
-    : definitions
+  return {
+    definitions: callbackProps
+      ? definitions.map((definition) => ({
+          ...definition,
+          props: { ...definition.props, ...callbackProps },
+        }))
+      : definitions,
+  }
 }
 
-function reconcileLayouts(
-  current: LayoutEntry[],
-  definitions: LayoutDefinition<SolidComponent>[],
-): LayoutEntry[] {
+function reconcileLayouts(current: LayoutEntry[], definitions: LayoutDefinition<SolidComponent>[]): LayoutEntry[] {
   const next: LayoutEntry[] = []
 
   for (let index = 0; index < definitions.length; index += 1) {
@@ -123,7 +151,7 @@ function createLayoutFacade(
       ...pageProps,
       ...definition.props,
       ...dynamic.shared,
-      ...(definition.name ? dynamic.named[definition.name] ?? {} : {}),
+      ...(definition.name ? (dynamic.named[definition.name] ?? {}) : {}),
     }
   }
 
@@ -153,12 +181,15 @@ export default function App<SharedProps extends PageProps = PageProps>(props: In
   let pageSnapshot: Page = { ...props.initialPage, flash: props.initialPage.flash ?? {} }
   let activeComponent = props.initialComponent
   let pageEntryValue: PageEntry | undefined = activeComponent ? { component: activeComponent, key: {} } : undefined
-  let layoutEntriesValue: LayoutEntry[] = []
+  const initialLayout = resolvePageLayout(activeComponent, pageSnapshot, props.defaultLayout)
+  let layoutEntriesValue = reconcileLayouts([], initialLayout.definitions)
 
   const [currentPage, setCurrentPage] = createSignal<Page>(pageSnapshot)
   const [pageEntry, setPageEntry] = createSignal<PageEntry | undefined>(pageEntryValue)
-  layoutEntriesValue = reconcileLayouts([], normalizePageLayouts(activeComponent, pageSnapshot, props.defaultLayout))
   const [layoutEntries, setLayoutEntries] = createSignal<LayoutEntry[]>(layoutEntriesValue)
+  const [renderLayoutState, setRenderLayoutState] = createSignal<{ render?: LayoutFunction }>({
+    render: initialLayout.render,
+  })
   const [layoutProps, setLayoutProps] = createSignal<LayoutPropsSnapshot>({ shared: {}, named: {} })
 
   const dynamicLayoutProps: LayoutPropsRuntime = createLayoutPropsRuntime(setLayoutProps)
@@ -190,13 +221,12 @@ export default function App<SharedProps extends PageProps = PageProps>(props: In
       const shouldRemountPage = !preserveState || activeComponent !== nextComponent
       activeComponent = nextComponent
       pageSnapshot = nextPage
-      layoutEntriesValue = reconcileLayouts(
-        layoutEntriesValue,
-        normalizePageLayouts(nextComponent, nextPage, props.defaultLayout),
-      )
+      const resolvedLayout = resolvePageLayout(nextComponent, nextPage, props.defaultLayout)
+      layoutEntriesValue = reconcileLayouts(layoutEntriesValue, resolvedLayout.definitions)
 
       setCurrentPage(nextPage)
       setLayoutEntries(layoutEntriesValue)
+      setRenderLayoutState({ render: resolvedLayout.render })
 
       if (shouldRemountPage || !pageEntryValue) {
         pageEntryValue = { component: nextComponent, key: {} }
@@ -232,11 +262,12 @@ export default function App<SharedProps extends PageProps = PageProps>(props: In
 
   const PageOutlet: Component = () => (
     <Show when={pageEntry()} keyed>
-      {(entry) =>
-        props.children
+      {(entry) => {
+        const child = props.children
           ? props.children({ Component: entry.component, props: pageProps, key: entry.key })
           : createComponent(entry.component, pageProps)
-      }
+        return renderLayoutState().render?.(child) ?? child
+      }}
     </Show>
   )
 
@@ -248,12 +279,9 @@ export default function App<SharedProps extends PageProps = PageProps>(props: In
         {(currentEntry) =>
           createComponent(
             currentEntry.component,
-            createLayoutFacade(
-              currentEntry,
-              pageProps,
-              layoutProps,
-              () => <LayoutOutlet depth={outletProps.depth + 1} />,
-            ),
+            createLayoutFacade(currentEntry, pageProps, layoutProps, () => (
+              <LayoutOutlet depth={outletProps.depth + 1} />
+            )),
           )
         }
       </Show>

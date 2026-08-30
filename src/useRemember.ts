@@ -20,20 +20,17 @@ export default function useRemember<State>(
     return value
   }
 
-  createEffect(
-    state,
-    (value) => {
-      const keys = excludeKeys?.() ?? []
+  createEffect(state, (value) => {
+    const keys = excludeKeys?.() ?? []
 
-      if (keys.length > 0 && typeof value === 'object' && value !== null) {
-        const filtered = { ...value } as Record<string, unknown>
-        keys.forEach((field) => delete filtered[field])
-        router.remember(filtered, key)
-      } else {
-        router.remember(value, key)
-      }
-    },
-  )
+    if (keys.length > 0 && typeof value === 'object' && value !== null) {
+      const filtered = { ...value } as Record<string, unknown>
+      keys.forEach((field) => delete filtered[field])
+      router.remember(filtered, key)
+    } else {
+      router.remember(value, key)
+    }
+  })
 
   return [state, setState]
 }

@@ -5,8 +5,20 @@ export const test = base.extend({
     const consoleErrors: string[] = []
     const hydrationErrors: string[] = []
     const networkErrors: string[] = []
-    const inertiaRequests = new Map<string, number>()
-    let precognitionValidationErrors = 0
+    const activeInertiaRequests = new Map<string, number>()
+    const duplicateRequests: string[] = []
+    let expectedValidationErrors = 0
+
+    const inertiaRequestKey = (request: import('@playwright/test').Request) =>
+      request.headers()['x-inertia'] === 'true' ? `${request.method()} ${request.url()}` : undefined
+    const releaseInertiaRequest = (request: import('@playwright/test').Request) => {
+      const key = inertiaRequestKey(request)
+      if (!key) return
+
+      const remaining = (activeInertiaRequests.get(key) ?? 1) - 1
+      if (remaining > 0) activeInertiaRequests.set(key, remaining)
+      else activeInertiaRequests.delete(key)
+    }
 
     page.on('console', (message) => {
       if (message.type() !== 'error') return
@@ -20,13 +32,15 @@ export const test = base.extend({
       if (/hydrat|mismatch/i.test(error.message)) hydrationErrors.push(error.message)
     })
     page.on('requestfailed', (request) => {
+      releaseInertiaRequest(request)
       const error = request.failure()?.errorText ?? 'failed'
-      if (request.headers()['precognition'] === 'true' && /abort|cancel/i.test(error)) return
+      if (/abort|cancel/i.test(error)) return
       networkErrors.push(`${request.method()} ${request.url()}: ${error}`)
     })
+    page.on('requestfinished', releaseInertiaRequest)
     page.on('response', (response) => {
-      if (response.status() === 422 && response.request().headers()['precognition'] === 'true') {
-        precognitionValidationErrors += 1
+      if (response.status() === 422) {
+        expectedValidationErrors += 1
         return
       }
       if (response.status() >= 400) {
@@ -34,17 +48,17 @@ export const test = base.extend({
       }
     })
     page.on('request', (request) => {
-      if (!request.headers()['x-inertia']) return
+      const key = inertiaRequestKey(request)
+      if (!key) return
 
-      const key = `${request.method()} ${request.url()}`
-      inertiaRequests.set(key, (inertiaRequests.get(key) ?? 0) + 1)
+      const active = activeInertiaRequests.get(key) ?? 0
+      if (active > 0) duplicateRequests.push(key)
+      activeInertiaRequests.set(key, active + 1)
     })
 
     await use(page)
-
-    const duplicateRequests = [...inertiaRequests].filter(([, count]) => count > 1)
     const unexpectedConsoleErrors = [...consoleErrors]
-    for (let index = 0; index < precognitionValidationErrors; index += 1) {
+    for (let index = 0; index < expectedValidationErrors; index += 1) {
       const expected = unexpectedConsoleErrors.findIndex((error) =>
         error.includes('Failed to load resource: the server responded with a status of 422'),
       )

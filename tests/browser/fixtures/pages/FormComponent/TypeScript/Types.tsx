@@ -57,7 +57,7 @@ export default function Types() {
         form.validate('profile.name').touch('tags.0')
         const validating: boolean = form.validating
         void validating
-        formRef?.getData().profile.name
+        void formRef?.getData().profile.name
 
         // @ts-expect-error The typed factory preserves field names in render callbacks.
         form.reset('unknown')

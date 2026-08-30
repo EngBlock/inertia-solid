@@ -34,10 +34,7 @@ interface InfiniteScrollComponentProps extends Omit<InfiniteScrollComponentBaseP
 export type InfiniteScrollProps = InfiniteScrollComponentProps &
   Omit<JSX.HTMLAttributes<HTMLElement>, keyof InfiniteScrollComponentProps | 'children' | 'ref'>
 
-const resolveElement = (
-  value: InfiniteScrollElement | undefined,
-  fallback?: HTMLElement,
-): HTMLElement | undefined => {
+const resolveElement = (value: InfiniteScrollElement | undefined, fallback?: HTMLElement): HTMLElement | undefined => {
   if (typeof value === 'string') return document.querySelector<HTMLElement>(value) ?? undefined
   if (typeof value === 'function') return value() ?? undefined
   return fallback
@@ -61,8 +58,7 @@ export default function InfiniteScroll(props: InfiniteScrollProps): Element {
     () => !!props.manual || ((props.manualAfter ?? 0) > 0 && requestCount() >= props.manualAfter!),
   )
   const autoLoad = createMemo(() => !manualMode())
-  const fetchPrevious = (options?: ReloadOptions) =>
-    infiniteScroll?.dataManager.fetchPrevious(options)
+  const fetchPrevious = (options?: ReloadOptions) => infiniteScroll?.dataManager.fetchPrevious(options)
   const fetchNext = (options?: ReloadOptions) => infiniteScroll?.dataManager.fetchNext(options)
   const hasPrevious = () => infiniteScroll?.dataManager.hasPrevious() ?? hasPreviousPage()
   const hasNext = () => infiniteScroll?.dataManager.hasNext() ?? hasNextPage()
@@ -123,9 +119,7 @@ export default function InfiniteScroll(props: InfiniteScrollProps): Element {
 
     syncState()
     infiniteScroll.elementManager.setupObservers()
-    infiniteScroll.elementManager.processServerLoadedElements(
-      infiniteScroll.dataManager.getLastLoadedPage(),
-    )
+    infiniteScroll.elementManager.processServerLoadedElements(infiniteScroll.dataManager.getLastLoadedPage())
 
     if (props.autoScroll ?? !!props.reverse) {
       if (scrollableParent) {
@@ -233,9 +227,7 @@ export default function InfiniteScroll(props: InfiniteScrollProps): Element {
         ? renderAction(props.loading, nextState)
         : undefined,
   )
-  const items = createMemo(() =>
-    typeof props.children === 'function' ? props.children(itemState) : props.children,
-  )
+  const items = createMemo(() => (typeof props.children === 'function' ? props.children(itemState) : props.children))
 
   const htmlProps = omit(
     props,
@@ -260,9 +252,7 @@ export default function InfiniteScroll(props: InfiniteScrollProps): Element {
     'children',
   )
 
-  const start = !props.startElement && (
-    <div ref={(element) => (defaultStartElement = element)}>{previousContent()}</div>
-  )
+  const start = !props.startElement && <div ref={(element) => (defaultStartElement = element)}>{previousContent()}</div>
   const itemContainer = (
     <Dynamic
       component={props.as ?? 'div'}
@@ -272,12 +262,8 @@ export default function InfiniteScroll(props: InfiniteScrollProps): Element {
       {items()}
     </Dynamic>
   )
-  const end = !props.endElement && (
-    <div ref={(element) => (defaultEndElement = element)}>{nextContent()}</div>
-  )
-  const elements = createMemo(() =>
-    props.reverse ? [end, itemContainer, start] : [start, itemContainer, end],
-  )
+  const end = !props.endElement && <div ref={(element) => (defaultEndElement = element)}>{nextContent()}</div>
+  const elements = createMemo(() => (props.reverse ? [end, itemContainer, start] : [start, itemContainer, end]))
 
   return <>{elements()}</>
 }

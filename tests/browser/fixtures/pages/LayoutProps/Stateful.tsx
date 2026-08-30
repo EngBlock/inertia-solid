@@ -13,12 +13,20 @@ export default function Stateful() {
     })
   }
 
-  return <>
-    <h2>Stateful Page {page.props.step}</h2>
-    <button type="button" onClick={() => setCount(count() + 1)}>Page count {count()}</button>
-    <Link href="/layout-props/stateful-2" preserveState>Preserve page</Link>
-    <Link href="/layout-props/stateful-1" preserveState={false}>Remount page</Link>
-  </>
+  return (
+    <>
+      <h2>Stateful Page {page.props.step}</h2>
+      <button type="button" onClick={() => setCount(count() + 1)}>
+        Page count {count()}
+      </button>
+      <Link href="/layout-props/stateful-2" preserveState>
+        Preserve page
+      </Link>
+      <Link href="/layout-props/stateful-1" preserveState={false}>
+        Remount page
+      </Link>
+    </>
+  )
 }
 
 Stateful.layout = [AppLayout, { title: 'Stateful Layout' }]

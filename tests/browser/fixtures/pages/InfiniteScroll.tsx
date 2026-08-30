@@ -45,9 +45,7 @@ export default function InfiniteScrollFixture(props: Props) {
   const manualAfter = () => (props.mode.endsWith('manual-after') ? 1 : 0)
   const preserveUrl = () => props.mode === 'preserve-url'
   const forwardOnly = () => ['automatic', 'manual-after', 'preserve-url'].includes(props.mode)
-  const displayedUsers = createMemo(() =>
-    reverse() ? [...props.users.data].reverse() : props.users.data,
-  )
+  const displayedUsers = createMemo(() => (reverse() ? [...props.users.data].reverse() : props.users.data))
 
   const previous = (state: InfiniteScrollActionSlotProps) => (
     <div data-testid="previous-state">
@@ -116,9 +114,7 @@ export default function InfiniteScrollFixture(props: Props) {
           {(state) => (
             <>
               <ul id="custom-items" data-loading={state.loadingNext}>
-                <For each={props.users.data}>
-                  {(user) => <li style={{ height: '120px' }}>{user.name}</li>}
-                </For>
+                <For each={props.users.data}>{(user) => <li style={{ height: '120px' }}>{user.name}</li>}</For>
               </ul>
               <div id="custom-end">Custom end</div>
             </>

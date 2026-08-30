@@ -1,8 +1,4 @@
-import {
-  InfiniteScroll,
-  type InfiniteScrollActionSlotProps,
-  type InfiniteScrollRef,
-} from '@engblock/inertia-solid'
+import { InfiniteScroll, type InfiniteScrollActionSlotProps, type InfiniteScrollRef } from '@engblock/inertia-solid'
 
 let api: InfiniteScrollRef | undefined
 

@@ -147,9 +147,7 @@ export default function useForm<TForm extends FormDataType<TForm>>(
   rememberKey: string,
   data: TForm | (() => TForm),
 ): InertiaForm<TForm>
-export default function useForm<TForm extends FormDataType<TForm>>(
-  data: TForm | (() => TForm),
-): InertiaForm<TForm>
+export default function useForm<TForm extends FormDataType<TForm>>(data: TForm | (() => TForm)): InertiaForm<TForm>
 export default function useForm<TForm extends FormDataType<TForm>>(): InertiaForm<TForm>
 export default function useForm<TForm extends FormDataType<TForm>>(
   ...args: UseFormArguments<TForm>
@@ -161,9 +159,7 @@ export default function useForm<TForm extends FormDataType<TForm>>(
   const resolveData = () => (isDataFunction ? (data as () => TForm)() : data)
   const resolved = cloneDeep(resolveData())
   const rememberedData = rememberKey ? router.restore<TForm>(`${rememberKey}:data`) : undefined
-  const rememberedErrors = rememberKey
-    ? router.restore<FormDataErrors<TForm>>(`${rememberKey}:errors`)
-    : undefined
+  const rememberedErrors = rememberKey ? router.restore<FormDataErrors<TForm>>(`${rememberKey}:errors`) : undefined
 
   let canonicalData = rememberedData
     ? Object.assign(cloneDeep(resolved), cloneDeep(rememberedData))
@@ -243,7 +239,10 @@ export default function useForm<TForm extends FormDataType<TForm>>(
     })
   }
 
-  const setData = ((keyOrData: FormDataKeys<TForm> | ((previousData: TForm) => TForm) | Partial<TForm>, value?: unknown) => {
+  const setData = ((
+    keyOrData: FormDataKeys<TForm> | ((previousData: TForm) => TForm) | Partial<TForm>,
+    value?: unknown,
+  ) => {
     if (typeof keyOrData === 'string') {
       canonicalData = set(cloneDeep(canonicalData), keyOrData, value)
     } else if (typeof keyOrData === 'function') {
@@ -418,11 +417,7 @@ export default function useForm<TForm extends FormDataType<TForm>>(
         markSuccessful(submission)
         const result = options.onSuccess ? await options.onSuccess(page) : undefined
 
-        if (
-          !disposed &&
-          submission === latestSubmission &&
-          defaultsRevision === defaultsRevisionBeforeSuccess
-        ) {
+        if (!disposed && submission === latestSubmission && defaultsRevision === defaultsRevisionBeforeSuccess) {
           canonicalDefaults = cloneDeep(canonicalData)
           projectDefaults()
           flush()
@@ -612,10 +607,7 @@ export default function useForm<TForm extends FormDataType<TForm>>(
     touched(field?: FormDataKeys<TForm>) {
       return typeof field === 'string' ? state.touched.includes(field) : state.touched.length > 0
     },
-    touch(
-      field: FormDataKeys<TForm> | NamedFormEvent | Array<FormDataKeys<TForm>>,
-      ...fields: FormDataKeys<TForm>[]
-    ) {
+    touch(field: FormDataKeys<TForm> | NamedFormEvent | Array<FormDataKeys<TForm>>, ...fields: FormDataKeys<TForm>[]) {
       if (!validator) throw new Error('Precognition is not configured for this form.')
       if (Array.isArray(field)) validator.touch(field)
       else if (typeof field === 'string') validator.touch([field, ...fields])

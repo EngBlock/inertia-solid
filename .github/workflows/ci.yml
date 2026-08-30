@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  check:
+  release-gates:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,6 +20,14 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --dir tests/browser exec playwright install --with-deps chromium
+      - run: composer install --working-dir=playgrounds/laravel --no-interaction --prefer-dist
+      - run: pnpm --dir tests/browser exec playwright install --with-deps chromium webkit
       - run: pnpm check
+      - run: pnpm verify
+      - run: pnpm playground:build
+      - run: pnpm playground:test

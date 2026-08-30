@@ -28,9 +28,7 @@ export default function Errors() {
         Submit form
       </button>
       <p data-testid="lifecycle">{lifecycle().join(',')}</p>
-      <Show when={form.errors['profile.name']}>
-        {(error) => <p data-testid="name-error">{error()}</p>}
-      </Show>
+      <Show when={form.errors['profile.name']}>{(error) => <p data-testid="name-error">{error()}</p>}</Show>
     </main>
   )
 }

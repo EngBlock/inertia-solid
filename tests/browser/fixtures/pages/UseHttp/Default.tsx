@@ -19,9 +19,7 @@ export default function Default() {
 
   const saveOptimistically = async () => {
     try {
-      await form
-        .optimistic((data) => ({ name: `${data.name} (saving)` }))
-        .post('/api/use-http/slow')
+      await form.optimistic((data) => ({ name: `${data.name} (saving)` })).post('/api/use-http/slow')
     } catch (error) {
       if (error instanceof HttpCancelledError) setCancelled(true)
     }
@@ -30,10 +28,18 @@ export default function Default() {
   return (
     <main>
       <input id="name" value={form.data.name} onInput={(event) => form.setData('name', event.currentTarget.value)} />
-      <button id="save" type="button" onClick={save}>Save</button>
-      <button id="validate" type="button" onClick={validate}>Validate</button>
-      <button id="optimistic" type="button" onClick={saveOptimistically}>Optimistic</button>
-      <button id="cancel" type="button" onClick={() => form.cancel()}>Cancel</button>
+      <button id="save" type="button" onClick={save}>
+        Save
+      </button>
+      <button id="validate" type="button" onClick={validate}>
+        Validate
+      </button>
+      <button id="optimistic" type="button" onClick={saveOptimistically}>
+        Optimistic
+      </button>
+      <button id="cancel" type="button" onClick={() => form.cancel()}>
+        Cancel
+      </button>
       <output id="result">{result()}</output>
       <output id="processing">{form.processing ? 'processing' : 'idle'}</output>
       <output id="response">{form.response?.method ?? ''}</output>

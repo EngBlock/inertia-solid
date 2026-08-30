@@ -113,9 +113,7 @@ export default async function createInertiaApp<SharedProps extends PageProps = P
       serverHead,
     }
     const root = () => {
-      const app = setup
-        ? setup({ el: null, App, props: appProps })
-        : <App {...appProps} />
+      const app = setup ? setup({ el: null, App, props: appProps }) : <App {...appProps} />
       const resolved = typeof app === 'function' ? app() : app
       return withApp ? withApp(resolved as Element, { ssr: true, page: currentPage }) : (resolved as Element)
     }

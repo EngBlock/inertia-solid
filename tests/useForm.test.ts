@@ -219,10 +219,7 @@ describe('useForm', () => {
       flush()
 
       expect(remember).toHaveBeenCalledWith({ name: 'Katherine' }, 'profile:data')
-      expect(remember).toHaveBeenCalledWith(
-        { name: 'Restored error', password: 'Required' },
-        'profile:errors',
-      )
+      expect(remember).toHaveBeenCalledWith({ name: 'Restored error', password: 'Required' }, 'profile:errors')
       dispose()
     })
   })
@@ -262,7 +259,11 @@ describe('useForm', () => {
 
     let form!: ReturnType<typeof useForm<{ name: string }>>
     const dispose = createRoot((rootDispose) => {
-      form = useForm(() => method, () => url, { name: 'Ada' })
+      form = useForm(
+        () => method,
+        () => url,
+        { name: 'Ada' },
+      )
       method = 'patch'
       url = '/profiles/1'
       form.setData('name', 'Grace')

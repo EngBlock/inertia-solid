@@ -46,10 +46,7 @@ export interface FormComponentMethods<TForm extends object = Record<string, any>
     field?: FormDataKeys<TForm> | NamedFormEvent | ValidationConfig,
     config?: ValidationConfig,
   ): FormComponentRef<TForm>
-  touch<K extends FormDataKeys<TForm>>(
-    field: K | NamedFormEvent | Array<K>,
-    ...fields: K[]
-  ): FormComponentRef<TForm>
+  touch<K extends FormDataKeys<TForm>>(field: K | NamedFormEvent | Array<K>, ...fields: K[]): FormComponentRef<TForm>
   touched<K extends FormDataKeys<TForm>>(field?: K): boolean
 }
 
@@ -94,9 +91,7 @@ export default function Form<TForm extends object = Record<string, any>>(props: 
   let defaultData: FormData | undefined
 
   const baseMethod = (): Method =>
-    isUrlMethodPair(props.action)
-      ? props.action.method
-      : ((props.method ?? 'get').toLowerCase() as Method)
+    isUrlMethodPair(props.action) ? props.action.method : ((props.method ?? 'get').toLowerCase() as Method)
   const baseAction = () => (isUrlMethodPair(props.action) ? props.action.url : (props.action ?? ''))
 
   const getFormData = (submitter: FormSubmitter = null) =>
@@ -104,12 +99,7 @@ export default function Form<TForm extends object = Record<string, any>>(props: 
   const getData = (submitter: FormSubmitter = null) =>
     formDataToObject(getFormData(submitter)) as TForm & Record<string, FormDataConvertible>
   const getUrlAndData = (submitter: FormSubmitter = null) =>
-    mergeDataIntoQueryString(
-      baseMethod(),
-      baseAction(),
-      getData(submitter),
-      props.queryStringArrayFormat ?? 'brackets',
-    )
+    mergeDataIntoQueryString(baseMethod(), baseAction(), getData(submitter), props.queryStringArrayFormat ?? 'brackets')
   const getTransformedData = () => props.transform?.(getUrlAndData()[1] as TForm) ?? getUrlAndData()[1]
 
   form
@@ -194,9 +184,7 @@ export default function Form<TForm extends object = Record<string, any>>(props: 
       invalidateCacheTags: props.invalidateCacheTags ?? [],
       component:
         props.component ??
-        (props.instant && isUrlMethodPair(props.action)
-          ? resolveUrlMethodPairComponent(props.action)
-          : null),
+        (props.instant && isUrlMethodPair(props.action) ? resolveUrlMethodPairComponent(props.action) : null),
       optimistic: props.optimistic ? (pageProps) => props.optimistic!(pageProps, data as TForm) : undefined,
       forceFormData: encoding?.toLowerCase() === 'multipart/form-data',
       onCancelToken: props.onCancelToken,
@@ -265,9 +253,7 @@ export default function Form<TForm extends object = Record<string, any>>(props: 
       form.validate(
         ...UseFormUtils.mergeHeadersForValidation(
           field as string | NamedInputEvent | ValidationConfig | undefined,
-          field && typeof field === 'object' && 'target' in field
-            ? (validationConfig ?? {})
-            : validationConfig,
+          field && typeof field === 'object' && 'target' in field ? (validationConfig ?? {}) : validationConfig,
           props.headers,
         ),
       )
@@ -344,7 +330,7 @@ export default function Form<TForm extends object = Record<string, any>>(props: 
     <FormContext value={exposed as unknown as FormComponentRef}>
       <form
         {...htmlProps}
-        ref={formElement}
+        ref={(element) => (formElement = element)}
         action={baseAction()}
         method={baseMethod() as 'get' | 'post'}
         inert={props.disableWhileProcessing && form.processing ? true : undefined}

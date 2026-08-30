@@ -23,7 +23,9 @@ export default function AppLayout(props: Props) {
   return (
     <div class="app-layout" data-theme={props.theme ?? 'light'} data-step={props.step}>
       <h1 class="app-title">{props.title ?? 'Default Title'}</h1>
-      <button type="button" onClick={() => setCount(count() + 1)}>Layout count {count()}</button>
+      <button type="button" onClick={() => setCount(count() + 1)}>
+        Layout count {count()}
+      </button>
       {props.showSidebar !== false && <aside class="sidebar">Sidebar</aside>}
       <main>{props.children}</main>
     </div>

@@ -5,8 +5,8 @@
   "scripts": {
     "build": "vite build && vite build --ssr ssr.tsx",
     "test": "pnpm typecheck && pnpm build && playwright test",
-    "test:csr": "pnpm typecheck && pnpm build && playwright test --project=solid-csr",
-    "test:ssr": "pnpm typecheck && pnpm build && playwright test --project=solid-ssr",
+    "test:csr": "pnpm typecheck && pnpm build && playwright test --project='*-csr'",
+    "test:ssr": "pnpm typecheck && pnpm build && playwright test --project='*-ssr'",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

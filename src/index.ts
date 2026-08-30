@@ -28,7 +28,14 @@ export type {
 export { default as Link } from './Link'
 export type { InertiaLinkProps } from './Link'
 export { resetLayoutProps, setLayoutProps } from './layoutProps'
-export type { LayoutCallback, LayoutComponent, LayoutDefinition, LayoutFunction, ResolvedComponent, SolidComponent } from './types'
+export type {
+  LayoutCallback,
+  LayoutComponent,
+  LayoutDefinition,
+  LayoutFunction,
+  ResolvedComponent,
+  SolidComponent,
+} from './types'
 export { default as useHttp } from './useHttp'
 export type { HttpForm, HttpPrecognitiveForm } from './useHttp'
 export { default as usePage } from './usePage'

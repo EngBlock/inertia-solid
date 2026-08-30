@@ -1,9 +1,4 @@
-import {
-  createForm,
-  type FormComponentRef,
-  type FormComponentSlotProps,
-  useFormContext,
-} from '@engblock/inertia-solid'
+import { createForm, type FormComponentRef, type FormComponentSlotProps, useFormContext } from '@engblock/inertia-solid'
 import { createSignal } from 'solid-js'
 
 type ProfileForm = {

@@ -45,13 +45,7 @@ export default function Basic(props: { form?: Record<string, unknown> }) {
             >
               Publish
             </button>
-            <button
-              type="submit"
-              name="intent"
-              value="search"
-              formaction="/dump/get"
-              formmethod="get"
-            >
+            <button type="submit" name="intent" value="search" formaction="/dump/get" formmethod="get">
               Search
             </button>
             <button

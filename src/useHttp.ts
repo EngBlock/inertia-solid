@@ -16,7 +16,6 @@ import {
   type FormDataValues,
   type HttpProgressEvent,
   type Method,
-  type Progress,
   type UrlMethodPair,
   type UseFormArguments,
   type UseFormTransformCallback,
@@ -35,11 +34,10 @@ import useForm, {
   type SetDataAction,
 } from './useForm'
 
-export interface HttpForm<TForm extends object, TResponse = unknown>
-  extends Omit<
-    InertiaForm<TForm>,
-    'submit' | 'get' | 'post' | 'put' | 'patch' | 'delete' | 'dontRemember' | 'optimistic' | 'withPrecognition'
-  > {
+export interface HttpForm<TForm extends object, TResponse = unknown> extends Omit<
+  InertiaForm<TForm>,
+  'submit' | 'get' | 'post' | 'put' | 'patch' | 'delete' | 'dontRemember' | 'optimistic' | 'withPrecognition'
+> {
   readonly response: TResponse | null
   setData: SetDataAction<TForm>
   transform(callback: UseFormTransformCallback<TForm>): void
@@ -251,9 +249,7 @@ export default function useHttp<TForm extends FormDataType<TForm>, TResponse = u
         (typeof error === 'object' && error !== null && 'name' in error && error.name === 'AbortError')
       ) {
         options.onCancel?.()
-        throw error instanceof HttpCancelledError
-          ? error
-          : new HttpCancelledError('Request was cancelled', url)
+        throw error instanceof HttpCancelledError ? error : new HttpCancelledError('Request was cancelled', url)
       }
 
       options.onNetworkError?.(error instanceof Error ? error : new Error('Unknown error'))
@@ -284,7 +280,8 @@ export default function useHttp<TForm extends FormDataType<TForm>, TResponse = u
     post: (url: string, options: UseHttpSubmitOptions<TResponse, TForm> = {}) => submitRequest('post', url, options),
     put: (url: string, options: UseHttpSubmitOptions<TResponse, TForm> = {}) => submitRequest('put', url, options),
     patch: (url: string, options: UseHttpSubmitOptions<TResponse, TForm> = {}) => submitRequest('patch', url, options),
-    delete: (url: string, options: UseHttpSubmitOptions<TResponse, TForm> = {}) => submitRequest('delete', url, options),
+    delete: (url: string, options: UseHttpSubmitOptions<TResponse, TForm> = {}) =>
+      submitRequest('delete', url, options),
     cancel() {
       controllers.get(latestRequest)?.abort()
     },

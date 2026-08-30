@@ -11,11 +11,10 @@ const response: Promise<Response> = form.post('/users')
 form.setData('profile.name', 'Ada')
 form.submit({ method: 'patch', url: '/users/1' })
 
-const precognitive: HttpPrecognitiveForm<Data, Response> = useHttp<Data, Response>(
-  'post',
-  '/users',
-  { profile: { name: '' }, active: true },
-)
+const precognitive: HttpPrecognitiveForm<Data, Response> = useHttp<Data, Response>('post', '/users', {
+  profile: { name: '' },
+  active: true,
+})
 precognitive.validate('profile.name')
 
 void response
