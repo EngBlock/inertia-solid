@@ -38,6 +38,7 @@ const routes = {
   '/layout-props/stateful-1': { component: 'LayoutProps/Stateful', props: { step: 1 } },
   '/layout-props/stateful-2': { component: 'LayoutProps/Stateful', props: { step: 2 } },
   '/use-http': { component: 'UseHttp/Default', props: {} },
+  '/when-visible': { component: 'WhenVisible', props: {} },
 }
 
 const mimeTypes = {
@@ -269,6 +270,18 @@ createServer(async (request, response) => {
             ? { count: 1, errors: { fail: 'Optimistic update failed.' } }
             : { count: 2, errors: {} },
         }
+      }
+
+      if (url.pathname === '/when-visible') {
+        await new Promise((resolve) => setTimeout(resolve, 250))
+        const only = String(request.headers['x-inertia-partial-data'] ?? '').split(',').filter(Boolean)
+        const props = {}
+
+        if (only.includes('foo')) props.foo = 'loaded'
+        if (only.includes('delayed')) props.delayed = 'loaded'
+        if (only.length === 0) props.count = Number(url.searchParams.get('count') ?? 0)
+
+        inertiaPage = { ...inertiaPage, props }
       }
 
       response

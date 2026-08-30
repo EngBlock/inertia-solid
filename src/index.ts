@@ -38,3 +38,5 @@ export type {
   SetDataByObject,
 } from './useForm'
 export { default as useRemember } from './useRemember'
+export { default as WhenVisible } from './WhenVisible'
+export type { WhenVisibleProps, WhenVisibleSlotProps } from './WhenVisible'
