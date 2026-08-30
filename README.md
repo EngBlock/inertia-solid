@@ -195,6 +195,20 @@ pnpm playground:dev
 
 See the [playground README](playgrounds/laravel/README.md) for first-run setup and test commands.
 
+## Trellis playground
+
+[`playgrounds/trello`](playgrounds/trello) is a separate, full Laravel application that demonstrates a Trello-style local-first product on the adapter. It pins Solid and `@solidjs/web` to `2.0.0-rc.4`, uses Inertia for page navigation and server-owned page props, and uses Solid's `createOptimisticStore` with direct `useHttp` snapshot synchronization for instant board editing and offline recovery.
+
+```bash
+composer --working-dir=playgrounds/trello run setup
+
+# Run these in separate terminals:
+php playgrounds/trello/artisan serve
+pnpm trello:dev
+```
+
+See the [Trellis README](playgrounds/trello/README.md) for its architecture, features, and verification commands.
+
 ## Status
 
 Implemented:

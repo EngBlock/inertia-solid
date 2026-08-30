@@ -58,7 +58,10 @@
     "dev": "vite build --watch",
     "playground:build": "pnpm build && pnpm --filter inertia-solid-playground build",
     "playground:dev": "pnpm build && pnpm --parallel --filter @engblock/inertia-solid --filter inertia-solid-playground dev",
-    "playground:test": "pnpm --dir playgrounds/laravel test"
+    "playground:test": "pnpm --dir playgrounds/laravel test",
+    "trello:build": "pnpm build && pnpm --filter trellis-playground build",
+    "trello:dev": "pnpm build && pnpm --parallel --filter @engblock/inertia-solid --filter trellis-playground dev",
+    "trello:test": "pnpm --dir playgrounds/trello test"
   },
   "dependencies": {
     "es-toolkit": "^1.33.0",
