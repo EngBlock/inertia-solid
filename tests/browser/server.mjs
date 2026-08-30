@@ -37,6 +37,7 @@ const routes = {
   '/layout-props/suffix-b': { component: 'LayoutProps/SuffixB', props: {} },
   '/layout-props/stateful-1': { component: 'LayoutProps/Stateful', props: { step: 1 } },
   '/layout-props/stateful-2': { component: 'LayoutProps/Stateful', props: { step: 2 } },
+  '/use-http': { component: 'UseHttp/Default', props: {} },
 }
 
 const mimeTypes = {
@@ -160,6 +161,27 @@ createServer(async (request, response) => {
     }
 
     if (url.pathname.startsWith('/assets/') && (await serveAsset(url.pathname, response))) return
+
+    if (url.pathname.startsWith('/api/use-http')) {
+      const headers = {
+        'Cache-Control': 'no-store',
+        'Content-Type': 'application/json; charset=utf-8',
+        'X-Response-Metadata': 'preserved',
+      }
+
+      if (url.pathname === '/api/use-http/validation') {
+        response.writeHead(422, headers).end(JSON.stringify({ errors: { name: ['The name field is required.'] } }))
+        return
+      }
+
+      if (url.pathname === '/api/use-http/slow') {
+        await new Promise((resolve) => setTimeout(resolve, 250))
+      }
+
+      const data = request.method === 'GET' ? Object.fromEntries(url.searchParams) : await readRequestData(request)
+      response.writeHead(200, headers).end(JSON.stringify({ method: request.method, data }))
+      return
+    }
 
     if (url.pathname === '/precognition/default' && request.headers.precognition === 'true') {
       const data = await readRequestData(request)

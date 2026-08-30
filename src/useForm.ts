@@ -121,6 +121,19 @@ type FormState<TForm extends object> = {
   valid: string[]
 }
 
+export const HTTP_FORM_STATE: unique symbol = Symbol('HTTP_FORM_STATE')
+
+export interface HttpFormState<TForm extends object> {
+  data(): TForm
+  transform(): object
+  defaultsRevision(): number
+  commitDefaults(revision: number): void
+  prepare(): void
+  processing(value: boolean): void
+  progress(value: Progress | null): void
+  successful(): void
+}
+
 export default function useForm<TForm extends FormDataType<TForm>>(
   method: Method | (() => Method),
   url: string | (() => string),
@@ -328,10 +341,19 @@ export default function useForm<TForm extends FormDataType<TForm>>(
     flush()
   }
 
-  const markSuccessful = (submission: number) => {
-    if (disposed || submission !== latestSubmission) return
+  const markSuccessful = (submission?: number) => {
+    if (disposed || (submission !== undefined && submission !== latestSubmission)) return
 
-    updateLifecycle(submission, (draft) => {
+    const update = (callback: (draft: FormState<TForm>) => void) => {
+      if (submission === undefined) {
+        setState(callback)
+        flush()
+      } else {
+        updateLifecycle(submission, callback)
+      }
+    }
+
+    update((draft) => {
       draft.errors = {} as FormDataErrors<TForm>
       draft.wasSuccessful = true
       draft.recentlySuccessful = true
@@ -339,9 +361,11 @@ export default function useForm<TForm extends FormDataType<TForm>>(
 
     clearTimeout(recentlySuccessfulTimeout)
     recentlySuccessfulTimeout = setTimeout(() => {
-      updateLifecycle(submission, (draft) => {
+      if (disposed || (submission !== undefined && submission !== latestSubmission)) return
+      setState((draft) => {
         draft.recentlySuccessful = false
       })
+      flush()
     }, config.get('form.recentlySuccessfulDuration'))
   }
 
@@ -647,7 +671,44 @@ export default function useForm<TForm extends FormDataType<TForm>>(
       clearErrors(resolveName(field as string | NamedInputEvent) as FormDataKeys<TForm>)
       return form
     },
-  } as InertiaPrecognitiveForm<TForm>
+    [HTTP_FORM_STATE]: {
+      data: () => cloneDeep(canonicalData),
+      transform: () => transform(cloneDeep(canonicalData)),
+      defaultsRevision: () => defaultsRevision,
+      commitDefaults(revision: number) {
+        if (disposed || defaultsRevision !== revision) return
+        canonicalDefaults = cloneDeep(canonicalData)
+        projectDefaults()
+        flush()
+      },
+      prepare() {
+        if (disposed) return
+        clearTimeout(recentlySuccessfulTimeout)
+        setState((draft) => {
+          draft.errors = {} as FormDataErrors<TForm>
+          draft.wasSuccessful = false
+          draft.recentlySuccessful = false
+          draft.progress = null
+        })
+        flush()
+      },
+      processing(value: boolean) {
+        if (disposed) return
+        setState((draft) => {
+          draft.processing = value
+        })
+        flush()
+      },
+      progress(value: Progress | null) {
+        if (disposed) return
+        setState((draft) => {
+          draft.progress = value
+        })
+        flush()
+      },
+      successful: () => markSuccessful(),
+    } satisfies HttpFormState<TForm>,
+  } as InertiaPrecognitiveForm<TForm> & { [HTTP_FORM_STATE]: HttpFormState<TForm> }
 
   if (precognitionEndpoint) initializePrecognition(precognitionEndpoint)
 

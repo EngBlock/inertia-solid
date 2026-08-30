@@ -3,7 +3,7 @@
 A community SolidJS 2 adapter for [Inertia.js](https://inertiajs.com/).
 
 > [!WARNING]
-> This package is an early alpha. The runtime spine, persistent layouts, links, head descriptors, deferred props, polling, prefetch state, remembered signals, Inertia forms, and Laravel Precognition are present. Direct HTTP helpers, visibility, and infinite scroll are still being implemented. Do not use this release in production yet.
+> This package is an early alpha. The runtime spine, persistent layouts, links, head descriptors, deferred props, polling, prefetch state, remembered signals, Inertia forms, Laravel Precognition, and direct HTTP forms are present. Visibility and infinite scroll are still being implemented. Do not use this release in production yet.
 
 ## Design
 
@@ -160,6 +160,20 @@ Use `createForm<T>()` to create a reusable typed `Form` component. It is a compo
 const ProfileForm = createForm<{ name: string; email: string }>()
 ```
 
+## Direct HTTP forms
+
+`useHttp` shares the reactive form surface but sends JSON or multipart requests through the HTTP client configured by `createInertiaApp`. Its submit methods return response data without starting an Inertia visit:
+
+```tsx
+const form = useHttp<{ name: string }, { id: number }>({ name: '' })
+
+const user = await form.post('/api/users', {
+  onProgress: (progress) => console.log(progress.percentage),
+})
+```
+
+HTTP 422 responses populate `form.errors`; other HTTP and network failures invoke their callbacks and reject. `form.cancel()` aborts the active request. Use `.optimistic(data => ({ ... }))` for a one-shot local patch that settles on success and rolls back on failure or cancellation. As with `useForm`, read state such as `form.processing` and `form.response` inside tracked JSX or computations.
+
 ## Development
 
 ```bash
@@ -199,16 +213,16 @@ Implemented:
 - `useRemember`
 - Typed `useForm` visit lifecycle, remembrance, cancellation, optimistic updates, and Precognition
 - Native `Form` with Precognition, stable form context and refs, and typed `createForm<T>()`
+- Typed `useHttp` direct JSON and upload requests with cancellation and optimistic updates
 - Owner-safe persistent and named layouts
 - Reactive `setLayoutProps` and `resetLayoutProps`
 - Core/config/server exports
 
 Next priorities:
 
-1. `useHttp`
-2. `WhenVisible` and `InfiniteScroll`
-3. Full Inertia shared Playwright suite and browser matrix
-4. Solid ambient-head and async SSR integration
+1. `WhenVisible` and `InfiniteScroll`
+2. Full Inertia shared Playwright suite and browser matrix
+3. Solid ambient-head and async SSR integration
 
 ## License
 
