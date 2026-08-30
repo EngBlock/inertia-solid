@@ -37,6 +37,11 @@ const routes = {
   '/layout-props/suffix-b': { component: 'LayoutProps/SuffixB', props: {} },
   '/layout-props/stateful-1': { component: 'LayoutProps/Stateful', props: { step: 1 } },
   '/layout-props/stateful-2': { component: 'LayoutProps/Stateful', props: { step: 2 } },
+  '/infinite-scroll/automatic': { component: 'InfiniteScroll', props: { mode: 'automatic' } },
+  '/infinite-scroll/custom': { component: 'InfiniteScroll', props: { mode: 'custom' } },
+  '/infinite-scroll/manual': { component: 'InfiniteScroll', props: { mode: 'manual' } },
+  '/infinite-scroll/manual-after': { component: 'InfiniteScroll', props: { mode: 'manual-after' } },
+  '/infinite-scroll/preserve-url': { component: 'InfiniteScroll', props: { mode: 'preserve-url' } },
   '/use-http': { component: 'UseHttp/Default', props: {} },
   '/when-visible': { component: 'WhenVisible', props: {} },
 }
@@ -48,19 +53,43 @@ const mimeTypes = {
   '.map': 'application/json; charset=utf-8',
 }
 
-function pageFor(pathname) {
-  const route = routes[pathname]
+function pageFor(url) {
+  const route = routes[url.pathname]
 
   if (!route) return null
 
-  return {
+  const page = {
     component: route.component,
     props: route.props,
-    url: pathname,
+    url: `${url.pathname}${url.search}`,
     version: null,
     clearHistory: false,
     encryptHistory: false,
     rescuedProps: [],
+  }
+
+  if (!url.pathname.startsWith('/infinite-scroll/')) return page
+
+  const currentPage = Math.min(3, Math.max(1, Number(url.searchParams.get('page') ?? 1)))
+  const firstUser = (currentPage - 1) * 5 + 1
+  const users = Array.from({ length: 5 }, (_, index) => {
+    const id = firstUser + index
+    return { id, name: `User ${id}` }
+  })
+
+  return {
+    ...page,
+    props: { ...route.props, users: { data: users } },
+    mergeProps: ['users.data'],
+    scrollProps: {
+      users: {
+        pageName: 'page',
+        previousPage: currentPage > 1 ? currentPage - 1 : null,
+        nextPage: currentPage < 3 ? currentPage + 1 : null,
+        currentPage,
+        reset: false,
+      },
+    },
   }
 }
 
@@ -219,7 +248,7 @@ createServer(async (request, response) => {
       return
     }
 
-    const page = pageFor(url.pathname)
+    const page = pageFor(url)
     if (!page) {
       response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }).end('Not found')
       return
@@ -270,6 +299,10 @@ createServer(async (request, response) => {
             ? { count: 1, errors: { fail: 'Optimistic update failed.' } }
             : { count: 2, errors: {} },
         }
+      }
+
+      if (url.pathname.startsWith('/infinite-scroll/')) {
+        await new Promise((resolve) => setTimeout(resolve, 200))
       }
 
       if (url.pathname === '/when-visible') {

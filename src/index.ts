@@ -17,6 +17,14 @@ export type {
 } from './Form'
 export { default as Head } from './Head'
 export type { HeadProps, HeadTagDescriptor } from './Head'
+export { default as InfiniteScroll } from './InfiniteScroll'
+export type {
+  InfiniteScrollActionSlotProps,
+  InfiniteScrollElement,
+  InfiniteScrollProps,
+  InfiniteScrollRef,
+  InfiniteScrollSlotProps,
+} from './InfiniteScroll'
 export { default as Link } from './Link'
 export type { InertiaLinkProps } from './Link'
 export { resetLayoutProps, setLayoutProps } from './layoutProps'
