@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { extname, join, normalize } from 'node:path'
@@ -14,6 +15,18 @@ const ssrRenderer = ssr ? await import('./dist/server/ssr.js') : null
 const routes = {
   '/': { component: 'Home', props: { message: 'Rendered by the shared fixture server' } },
   '/about': { component: 'About', props: { message: 'Client-side navigation completed' } },
+  '/head': { component: 'Head', props: {} },
+  '/head/conditional': { component: 'Head/Conditional', props: {} },
+  '/head/mixed': { component: 'Head/Mixed', props: {} },
+  '/head/plain-title': { component: 'Head/Dataset', props: {} },
+  '/head/reactive': { component: 'Head/Reactive', props: { titleSuffix: 'Dashboard' } },
+  '/head/title-callback': { component: 'Head/TitleCallback', props: { titleSuffix: 'Account' } },
+  '/head/with-title': { component: 'Head/WithTitle', props: {} },
+  '/head/without-title': { component: 'Head/WithoutTitle', props: {} },
+  '/server-head': { component: 'ServerHead', props: {} },
+  '/server-head/custom-prop': { component: 'ServerHead', props: {} },
+  '/server-head/keyed': { component: 'ServerHead', props: {} },
+  '/server-head/keyed/next': { component: 'ServerHead', props: {} },
   '/dump/get': { component: 'Dump', props: {} },
   '/dump/post': { component: 'Dump', props: {} },
   '/dump/put': { component: 'Dump', props: {} },
@@ -64,10 +77,48 @@ function pageFor(url) {
 
   if (!route) return null
 
-  const routeProps =
+  let routeProps =
     route.props.mode === 'manual-after' && url.searchParams.get('reverse') === '1'
       ? { ...route.props, mode: 'reverse-manual-after' }
       : route.props
+
+  if (url.pathname === '/server-head') {
+    const override = url.searchParams.has('override')
+    routeProps = {
+      foo: `foo ${randomUUID()}`,
+      next: '/server-head/keyed',
+      head: override
+        ? [
+            '<title>Server Head Initial</title>',
+            '<meta data-inertia="description" name="description" content="Server default">',
+          ]
+        : ['<title>Server Head Initial</title>', '<meta name="description" content="Initial server head description">'],
+    }
+  } else if (url.pathname === '/server-head/keyed') {
+    routeProps = {
+      next: '/server-head/keyed/next',
+      head: [
+        '<title data-inertia="title">Keyed Head A</title>',
+        '<meta data-inertia="description" name="description" content="Keyed description A">',
+        '<link data-inertia="canonical" rel="canonical" href="https://example.com/a">',
+      ],
+    }
+  } else if (url.pathname === '/server-head/keyed/next') {
+    routeProps = {
+      next: '/server-head/keyed',
+      head: [
+        '<title data-inertia="title">Keyed Head B</title>',
+        '<meta data-inertia="robots" name="robots" content="noindex">',
+        '<meta data-inertia="description" name="description" content="Keyed description B">',
+        '<link data-inertia="canonical" rel="canonical" href="https://example.com/b">',
+      ],
+    }
+  } else if (url.pathname === '/server-head/custom-prop') {
+    routeProps = {
+      next: '/server-head',
+      metaTags: ['<title>Custom Prop Head</title>', '<meta name="description" content="Custom prop description">'],
+    }
+  }
   const page = {
     component: route.component,
     props: routeProps,
@@ -204,6 +255,11 @@ createServer(async (request, response) => {
       return
     }
 
+    if (url.pathname === '/custom.css') {
+      response.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8' }).end('')
+      return
+    }
+
     if (url.pathname.startsWith('/assets/') && (await serveAsset(url.pathname, response))) return
 
     if (url.pathname.startsWith('/api/use-http')) {
@@ -323,6 +379,10 @@ createServer(async (request, response) => {
             prependProps: ['users.data'],
           }
         }
+      }
+
+      if (url.pathname === '/server-head' && request.headers['x-inertia-partial-data']) {
+        inertiaPage = { ...inertiaPage, props: { foo: `foo ${randomUUID()}` } }
       }
 
       if (url.pathname === '/when-visible') {

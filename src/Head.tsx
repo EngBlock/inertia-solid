@@ -32,8 +32,7 @@ function serializeTag(descriptor: HeadTagDescriptor): string {
   const serializedAttributes = (
     Object.entries(attributes) as Array<[string, string | number | boolean | null | undefined]>
   )
-    .filter(([, value]) => value !== false && value !== null && value !== undefined)
-    .map(([name, value]) => (value === true ? name : `${name}="${escapeAttribute(value)}"`))
+    .map(([name, value]) => `${name}="${escapeAttribute(value)}"`)
     .join(' ')
   const opening = `<${descriptor.tag}${serializedAttributes ? ` ${serializedAttributes}` : ''}>`
 
@@ -51,8 +50,8 @@ export default function Head(props: HeadProps): null {
   provider.reconnect()
 
   const elements = (title: string | undefined, tags: HeadTagDescriptor[]) => [
-    ...(title ? [`<title data-inertia="">${escapeText(title)}</title>`] : []),
     ...tags.map(serializeTag),
+    ...(title ? [`<title data-inertia="">${escapeText(title)}</title>`] : []),
   ]
 
   untrack(() => provider.update(elements(props.title, props.tags ?? [])))

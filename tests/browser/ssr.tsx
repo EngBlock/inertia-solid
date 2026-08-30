@@ -4,6 +4,8 @@ import type { Page } from '@inertiajs/core'
 const pages = import.meta.glob<{ default: SolidComponent }>('./fixtures/pages/**/*.tsx', { eager: true })
 
 export async function render(page: Page) {
+  const params = new URL(page.url, 'http://localhost').searchParams
+
   return createInertiaApp({
     page,
     resolve: (name) => {
@@ -15,5 +17,13 @@ export async function render(page: Page) {
 
       return component.default
     },
+    ...(params.has('withTitleCallback') && {
+      title: (title, currentPage) => [title, currentPage.props.titleSuffix].filter(Boolean).join(' | '),
+    }),
+    ...(params.has('withServerHead') && { serverHead: true as const }),
+    ...(params.has('withServerHeadCallback') && {
+      serverHead: (currentPage) => currentPage.props.head as string[],
+    }),
+    ...(params.has('withServerHeadProp') && { serverHead: 'metaTags' }),
   })
 }
