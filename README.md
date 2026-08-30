@@ -111,6 +111,20 @@ pnpm install
 pnpm check
 ```
 
+## Laravel playground
+
+A Laravel integration app lives in [`playgrounds/laravel`](playgrounds/laravel). It links this adapter through the pnpm workspace and includes example pages and feature tests.
+
+```bash
+composer --working-dir=playgrounds/laravel run setup
+
+# Run these in separate terminals:
+php playgrounds/laravel/artisan serve
+pnpm playground:dev
+```
+
+See the [playground README](playgrounds/laravel/README.md) for first-run setup and test commands.
+
 ## Status
 
 Implemented:

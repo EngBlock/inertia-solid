@@ -40,7 +40,10 @@
     "test": "vitest run",
     "check": "pnpm typecheck && pnpm test && pnpm build && pnpm test:ssr",
     "test:ssr": "node tests/ssr-smoke.mjs",
-    "dev": "vite build --watch"
+    "dev": "vite build --watch",
+    "playground:build": "pnpm build && pnpm --filter inertia-solid-playground build",
+    "playground:dev": "pnpm build && pnpm --parallel --filter @engblock/inertia-solid --filter inertia-solid-playground dev",
+    "playground:test": "pnpm --dir playgrounds/laravel test"
   },
   "peerDependencies": {
     "@inertiajs/core": "^3.7.0",
