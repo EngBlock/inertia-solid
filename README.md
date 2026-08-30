@@ -3,7 +3,7 @@
 A community SolidJS 2 adapter for [Inertia.js](https://inertiajs.com/).
 
 > [!WARNING]
-> This package is an early alpha. The runtime spine, persistent layouts, links, head descriptors, deferred props, polling, prefetch state, and remembered signals are present. Forms, direct HTTP helpers, visibility, and infinite scroll are still being implemented. Do not use this release in production yet.
+> This package is an early alpha. The runtime spine, persistent layouts, links, head descriptors, deferred props, polling, prefetch state, remembered signals, and Inertia forms are present. Precognition, direct HTTP helpers, visibility, and infinite scroll are still being implemented. Do not use this release in production yet.
 
 ## Design
 
@@ -123,6 +123,43 @@ Solid has no retained VDOM for inspecting arbitrary native head children. The al
 />
 ```
 
+## Component forms
+
+`Form` serializes native controls and exposes one stable reactive surface to its render callback, component ref, and descendants:
+
+```tsx
+import { createForm, Form, type FormComponentRef, useFormContext } from '@engblock/inertia-solid'
+
+function FieldError() {
+  const form = useFormContext<{ name: string }>()
+  return <span>{form?.errors.name}</span>
+}
+
+let formRef: FormComponentRef<{ name: string }> | undefined
+
+<Form<{ name: string }>
+  action="/users"
+  method="post"
+  ref={(form) => (formRef = form)}
+>
+  {(form) => (
+    <>
+      <input name="name" />
+      <FieldError />
+      <button disabled={form.processing}>Save</button>
+    </>
+  )}
+</Form>
+```
+
+The surface provides `errors`, `hasErrors`, `processing`, `progress`, success state, and `isDirty`, plus `clearErrors`, `resetAndClearErrors`, `setError`, `reset`, `submit`, `cancel`, `defaults`, `getData`, and `getFormData`. Read reactive properties where Solid tracks them rather than destructuring them eagerly. `useFormContext()` returns `undefined` outside a form.
+
+Use `createForm<T>()` to create a reusable typed `Form` component. It is a component factory, not an alias for the state-oriented `useForm` helper.
+
+```tsx
+const ProfileForm = createForm<{ name: string; email: string }>()
+```
+
 ## Development
 
 ```bash
@@ -161,13 +198,14 @@ Implemented:
 - `usePrefetch`
 - `useRemember`
 - Typed `useForm` visit lifecycle, remembrance, cancellation, and optimistic updates
+- Native `Form`, stable form context and refs, and typed `createForm<T>()`
 - Owner-safe persistent and named layouts
 - Reactive `setLayoutProps` and `resetLayoutProps`
 - Core/config/server exports
 
 Next priorities:
 
-1. `<Form>` and Precognition
+1. Form Precognition
 2. `useHttp`
 3. `WhenVisible` and `InfiniteScroll`
 4. Full Inertia shared Playwright suite and browser matrix

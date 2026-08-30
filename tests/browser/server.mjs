@@ -19,6 +19,7 @@ const routes = {
   '/dump/put': { component: 'Dump', props: {} },
   '/dump/patch': { component: 'Dump', props: {} },
   '/dump/delete': { component: 'Dump', props: {} },
+  '/form-component/advanced': { component: 'FormComponent/Advanced', props: { form: {} } },
   '/form-component/basic': { component: 'FormComponent/Basic', props: { form: {} } },
   '/form-component/errors': { component: 'FormComponent/Errors', props: { errors: {} } },
   '/form-helper/errors': { component: 'FormHelper/Errors', props: { errors: {} } },
@@ -171,6 +172,11 @@ createServer(async (request, response) => {
         const data = request.method === 'GET' ? Object.fromEntries(url.searchParams) : await readRequestData(request)
         await new Promise((resolve) => setTimeout(resolve, 120))
         inertiaPage = { ...inertiaPage, props: { errors: {}, form: data, method: request.method.toLowerCase() } }
+      }
+
+      if (request.method === 'POST' && url.pathname === '/form-component/advanced') {
+        const data = await readRequestData(request)
+        inertiaPage = { ...inertiaPage, props: { errors: {}, form: data } }
       }
 
       if (request.method === 'POST' && url.pathname === '/form-component/basic') {

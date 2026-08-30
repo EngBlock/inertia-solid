@@ -65,10 +65,14 @@ export type FormProps<TForm extends object = Record<string, any>> = SupportedFor
     ref?: (form: FormComponentRef<TForm>) => void
   }
 
-const FormContext = createContext<FormComponentRef>()
+export type TypedFormComponent<TForm extends object> = (props: FormProps<TForm>) => JSX.Element
+
+const missingFormContext = Symbol('MissingFormContext')
+const FormContext = createContext<FormComponentRef | typeof missingFormContext>(missingFormContext)
 
 export function useFormContext<TForm extends object = Record<string, any>>() {
-  return useContext(FormContext) as unknown as FormComponentRef<TForm> | undefined
+  const context = useContext(FormContext)
+  return context === missingFormContext ? undefined : (context as unknown as FormComponentRef<TForm>)
 }
 
 export default function Form<TForm extends object = Record<string, any>>(props: FormProps<TForm>): JSX.Element {
@@ -90,7 +94,10 @@ export default function Form<TForm extends object = Record<string, any>>(props: 
 
   const clearErrors = (...fields: FormDataKeys<TForm>[]) => form.clearErrors(...fields)
   const reset = (...fields: FormDataKeys<TForm>[]) => {
-    if (formElement && defaultData) resetFormFields(formElement, defaultData, fields as string[])
+    if (formElement && defaultData) {
+      resetFormFields(formElement, defaultData, fields as string[])
+      setIsDirty(!isEqual(getData(), formDataToObject(defaultData)))
+    }
     form.reset(...fields)
   }
   const resetAndClearErrors = (...fields: FormDataKeys<TForm>[]) => {
@@ -275,4 +282,8 @@ export default function Form<TForm extends object = Record<string, any>>(props: 
       </form>
     </FormContext>
   )
+}
+
+export function createForm<TForm extends object>(): TypedFormComponent<TForm> {
+  return Form as TypedFormComponent<TForm>
 }

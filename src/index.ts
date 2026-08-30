@@ -6,13 +6,14 @@ export { default as createInertiaApp } from './createInertiaApp'
 export type { CreateSolidInertiaAppOptions, SetupOptions } from './createInertiaApp'
 export { default as Deferred } from './Deferred'
 export type { DeferredProps, DeferredSlotProps } from './Deferred'
-export { default as Form, useFormContext } from './Form'
+export { createForm, default as Form, useFormContext } from './Form'
 export type {
   FormComponentMethods,
   FormComponentRef,
   FormComponentSlotProps,
   FormComponentState,
   FormProps,
+  TypedFormComponent,
 } from './Form'
 export { default as Head } from './Head'
 export type { HeadProps, HeadTagDescriptor } from './Head'
