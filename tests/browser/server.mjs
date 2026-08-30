@@ -19,6 +19,8 @@ const routes = {
   '/dump/put': { component: 'Dump', props: {} },
   '/dump/patch': { component: 'Dump', props: {} },
   '/dump/delete': { component: 'Dump', props: {} },
+  '/form-component/basic': { component: 'FormComponent/Basic', props: { form: {} } },
+  '/form-component/errors': { component: 'FormComponent/Errors', props: { errors: {} } },
   '/form-helper/errors': { component: 'FormHelper/Errors', props: { errors: {} } },
   '/form-helper/methods': { component: 'FormHelper/Methods', props: {} },
   '/form-helper/optimistic': { component: 'FormHelper/Optimistic', props: { count: 1, errors: {} } },
@@ -60,12 +62,35 @@ function pageFor(pathname) {
 async function readRequestData(request) {
   const chunks = []
   for await (const chunk of request) chunks.push(chunk)
-  const body = Buffer.concat(chunks).toString('utf8')
+  const buffer = Buffer.concat(chunks)
+  const contentType = request.headers['content-type'] ?? ''
 
-  if (!body) return {}
-  if (request.headers['content-type']?.includes('application/json')) return JSON.parse(body)
+  if (buffer.length === 0) return {}
+  if (contentType.includes('application/json')) return JSON.parse(buffer.toString('utf8'))
 
-  return Object.fromEntries(new URLSearchParams(body))
+  if (contentType.includes('multipart/form-data')) {
+    const boundary = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/)?.slice(1).find(Boolean)
+    if (!boundary) return {}
+
+    const data = {}
+    for (const part of buffer.toString('binary').split(`--${boundary}`).slice(1, -1)) {
+      const [rawHeaders, rawValue = ''] = part.replace(/^\r\n|\r\n$/g, '').split('\r\n\r\n')
+      const name = rawHeaders.match(/name="([^"]+)"/)?.[1]
+      if (!name) continue
+      const filename = rawHeaders.match(/filename="([^"]*)"/)?.[1]
+      const value = filename === undefined ? rawValue.replace(/\r\n$/, '') : filename
+      const current = data[name]
+      data[name] = current === undefined ? value : Array.isArray(current) ? [...current, value] : [current, value]
+    }
+    return data
+  }
+
+  const data = {}
+  for (const [key, value] of new URLSearchParams(buffer.toString('utf8'))) {
+    const current = data[key]
+    data[key] = current === undefined ? value : Array.isArray(current) ? [...current, value] : [current, value]
+  }
+  return data
 }
 
 function serializePage(page) {
@@ -140,11 +165,26 @@ createServer(async (request, response) => {
     }
 
     if (request.headers['x-inertia']) {
-      let inertiaPage = page
+      let inertiaPage = { ...page, url: `${url.pathname}${url.search}` }
 
       if (url.pathname.startsWith('/dump/')) {
         const data = request.method === 'GET' ? Object.fromEntries(url.searchParams) : await readRequestData(request)
-        inertiaPage = { ...page, props: { errors: {}, form: data, method: request.method.toLowerCase() } }
+        await new Promise((resolve) => setTimeout(resolve, 120))
+        inertiaPage = { ...inertiaPage, props: { errors: {}, form: data, method: request.method.toLowerCase() } }
+      }
+
+      if (request.method === 'POST' && url.pathname === '/form-component/basic') {
+        const data = await readRequestData(request)
+        await new Promise((resolve) => setTimeout(resolve, 120))
+        inertiaPage = { ...inertiaPage, props: { errors: {}, form: data } }
+      }
+
+      if (request.method === 'POST' && url.pathname === '/form-component/errors') {
+        const data = await readRequestData(request)
+        inertiaPage = {
+          ...page,
+          props: data.profile?.name ? { errors: {} } : { errors: { 'profile.name': 'The name field is required.' } },
+        }
       }
 
       if (request.method === 'POST' && url.pathname === '/form-helper/errors') {
@@ -183,7 +223,7 @@ createServer(async (request, response) => {
         'Content-Type': 'text/html; charset=utf-8',
         Vary: 'X-Inertia',
       })
-      .end(await documentFor(page))
+      .end(await documentFor({ ...page, url: `${url.pathname}${url.search}` }))
   } catch (error) {
     console.error(error)
     response.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' }).end('Internal server error')
