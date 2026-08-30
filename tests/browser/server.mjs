@@ -22,7 +22,9 @@ const routes = {
   '/form-component/advanced': { component: 'FormComponent/Advanced', props: { form: {} } },
   '/form-component/basic': { component: 'FormComponent/Basic', props: { form: {} } },
   '/form-component/errors': { component: 'FormComponent/Errors', props: { errors: {} } },
+  '/form-component/precognition/default': { component: 'FormComponent/Precognition/Default', props: {} },
   '/form-helper/errors': { component: 'FormHelper/Errors', props: { errors: {} } },
+  '/form-helper/precognition/default': { component: 'FormHelper/Precognition/Default', props: {} },
   '/form-helper/methods': { component: 'FormHelper/Methods', props: {} },
   '/form-helper/optimistic': { component: 'FormHelper/Optimistic', props: { count: 1, errors: {} } },
   '/form-helper/remember': { component: 'FormHelper/Remember', props: {} },
@@ -158,6 +160,41 @@ createServer(async (request, response) => {
     }
 
     if (url.pathname.startsWith('/assets/') && (await serveAsset(url.pathname, response))) return
+
+    if (url.pathname === '/precognition/default' && request.headers.precognition === 'true') {
+      const data = await readRequestData(request)
+      const fields = (request.headers['precognition-validate-only'] ?? '').split(',').filter(Boolean)
+      const errors = {}
+
+      if (fields.includes('name')) {
+        if (!data.name) errors.name = ['The name field is required.']
+        else if (String(data.name).length < 3) errors.name = ['The name must be at least 3 characters.']
+      }
+      if (fields.includes('email')) {
+        if (!data.email) errors.email = ['The email field is required.']
+        else if (!String(data.email).includes('@')) errors.email = ['The email must be a valid email address.']
+      }
+
+      if (data.name === 'ab') await new Promise((resolve) => setTimeout(resolve, 120))
+
+      const headers = {
+        'Cache-Control': 'no-store',
+        'Content-Type': 'application/json; charset=utf-8',
+        Precognition: 'true',
+      }
+      if (Object.keys(errors).length) {
+        response.writeHead(422, headers).end(JSON.stringify({ errors }))
+      } else {
+        response
+          .writeHead(204, {
+            'Cache-Control': 'no-store',
+            Precognition: 'true',
+            'Precognition-Success': 'true',
+          })
+          .end()
+      }
+      return
+    }
 
     const page = pageFor(url.pathname)
     if (!page) {

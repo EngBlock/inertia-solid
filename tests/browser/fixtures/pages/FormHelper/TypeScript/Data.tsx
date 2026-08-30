@@ -30,5 +30,19 @@ export default function Data() {
   // @ts-expect-error reset only accepts form field paths
   form.reset('missing')
 
+  const precognitive = useForm('post', '/profiles', {
+    name: '',
+    users: [{ name: '' }],
+  })
+  precognitive.touch('name').validate({ only: ['name'] })
+  precognitive.validate('users.*.name')
+  const validating: boolean = precognitive.validating
+  void validating
+
+  // @ts-expect-error only known form paths can be validated
+  precognitive.validate('missing')
+  // @ts-expect-error forms without an endpoint require withPrecognition first
+  form.validate('name')
+
   return null
 }

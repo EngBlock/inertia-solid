@@ -20,6 +20,8 @@ const formProps: FormProps<ProfileForm> = {
   method: 'post',
   transform: (data) => ({ ...data, tags: data.tags.filter(Boolean) }),
   resetOnSuccess: ['profile.name'],
+  validationTimeout: 250,
+  validateFiles: true,
 }
 
 function ContextConsumer() {
@@ -52,6 +54,9 @@ export default function Types() {
     >
       {(form: FormComponentSlotProps<ProfileForm>) => {
         form.setError('tags.0', 'Invalid tag')
+        form.validate('profile.name').touch('tags.0')
+        const validating: boolean = form.validating
+        void validating
         formRef?.getData().profile.name
 
         // @ts-expect-error The typed factory preserves field names in render callbacks.

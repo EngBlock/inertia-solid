@@ -28,6 +28,8 @@ export type { PrefetchState } from './usePrefetch'
 export { default as useForm } from './useForm'
 export type {
   InertiaForm,
+  InertiaFormValidation,
+  InertiaPrecognitiveForm,
   SetDataAction,
   SetDataByKeyValuePair,
   SetDataByMethod,

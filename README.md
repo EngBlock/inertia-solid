@@ -3,7 +3,7 @@
 A community SolidJS 2 adapter for [Inertia.js](https://inertiajs.com/).
 
 > [!WARNING]
-> This package is an early alpha. The runtime spine, persistent layouts, links, head descriptors, deferred props, polling, prefetch state, remembered signals, and Inertia forms are present. Precognition, direct HTTP helpers, visibility, and infinite scroll are still being implemented. Do not use this release in production yet.
+> This package is an early alpha. The runtime spine, persistent layouts, links, head descriptors, deferred props, polling, prefetch state, remembered signals, Inertia forms, and Laravel Precognition are present. Direct HTTP helpers, visibility, and infinite scroll are still being implemented. Do not use this release in production yet.
 
 ## Design
 
@@ -152,7 +152,7 @@ let formRef: FormComponentRef<{ name: string }> | undefined
 </Form>
 ```
 
-The surface provides `errors`, `hasErrors`, `processing`, `progress`, success state, and `isDirty`, plus `clearErrors`, `resetAndClearErrors`, `setError`, `reset`, `submit`, `cancel`, `defaults`, `getData`, and `getFormData`. Read reactive properties where Solid tracks them rather than destructuring them eagerly. `useFormContext()` returns `undefined` outside a form.
+The surface provides `errors`, `hasErrors`, `processing`, `progress`, success state, and `isDirty`, plus `clearErrors`, `resetAndClearErrors`, `setError`, `reset`, `submit`, `cancel`, `defaults`, `getData`, and `getFormData`. Precognitive forms also expose `validate`, `touch`, `touched`, `valid`, `invalid`, `validating`, and `validator`; configure component forms with `validationTimeout`, `validateFiles`, and `withAllErrors`. Read reactive properties where Solid tracks them rather than destructuring them eagerly. `useFormContext()` returns `undefined` outside a form.
 
 Use `createForm<T>()` to create a reusable typed `Form` component. It is a component factory, not an alias for the state-oriented `useForm` helper.
 
@@ -197,19 +197,18 @@ Implemented:
 - `usePoll`
 - `usePrefetch`
 - `useRemember`
-- Typed `useForm` visit lifecycle, remembrance, cancellation, and optimistic updates
-- Native `Form`, stable form context and refs, and typed `createForm<T>()`
+- Typed `useForm` visit lifecycle, remembrance, cancellation, optimistic updates, and Precognition
+- Native `Form` with Precognition, stable form context and refs, and typed `createForm<T>()`
 - Owner-safe persistent and named layouts
 - Reactive `setLayoutProps` and `resetLayoutProps`
 - Core/config/server exports
 
 Next priorities:
 
-1. Form Precognition
-2. `useHttp`
-3. `WhenVisible` and `InfiniteScroll`
-4. Full Inertia shared Playwright suite and browser matrix
-5. Solid ambient-head and async SSR integration
+1. `useHttp`
+2. `WhenVisible` and `InfiniteScroll`
+3. Full Inertia shared Playwright suite and browser matrix
+4. Solid ambient-head and async SSR integration
 
 ## License
 

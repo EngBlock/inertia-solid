@@ -1,9 +1,10 @@
 import type { CancelToken, Page, Progress, VisitOptions } from '@inertiajs/core'
 import { router } from '@inertiajs/core'
+import { client, HttpResponseError, type HttpRequestConfig, type HttpResponse } from 'laravel-precognition'
 import { createRoot, flush } from 'solid-js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { config } from '../src/config'
-import useForm from '../src/useForm'
+import useForm, { type InertiaPrecognitiveForm } from '../src/useForm'
 
 const progress: Progress = {
   percentage: 50,
@@ -245,6 +246,160 @@ describe('useForm', () => {
       expect(request.options().optimistic).toBeUndefined()
       dispose()
     })
+  })
+
+  it('validates against a reactive Precognition endpoint and exposes reactive state', async () => {
+    let method: 'post' | 'patch' = 'post'
+    let url = '/users'
+    let request!: HttpRequestConfig
+    let resolveResponse!: (response: HttpResponse) => void
+    client.useHttpClient({
+      request: (config) => {
+        request = config
+        return new Promise((resolve) => (resolveResponse = resolve))
+      },
+    })
+
+    let form!: ReturnType<typeof useForm<{ name: string }>>
+    const dispose = createRoot((rootDispose) => {
+      form = useForm(() => method, () => url, { name: 'Ada' })
+      method = 'patch'
+      url = '/profiles/1'
+      form.setData('name', 'Grace')
+      form.setValidationTimeout(0).validate('name', { headers: { 'X-Test': 'precognition' } })
+      return rootDispose
+    })
+
+    expect(form.touched('name')).toBe(true)
+    expect(form.validating).toBe(true)
+    expect(request).toMatchObject({
+      method: 'patch',
+      url: '/profiles/1',
+      headers: expect.objectContaining({
+        Precognition: true,
+        'Precognition-Validate-Only': 'name',
+        'X-Test': 'precognition',
+      }),
+    })
+
+    resolveResponse({
+      status: 204,
+      data: null,
+      headers: { precognition: 'true', 'precognition-success': 'true' },
+    })
+
+    await vi.waitFor(() => expect(form.validating).toBe(false))
+    expect(form.valid('name')).toBe(true)
+    expect(form.invalid('name')).toBe(false)
+    dispose()
+  })
+
+  it('updates validation errors before invoking each lifecycle callback once', async () => {
+    client.useHttpClient({
+      request: async () => {
+        throw new HttpResponseError({
+          status: 422,
+          data: { errors: { name: ['Too short', 'Letters only'] } },
+          headers: { precognition: 'true' },
+        })
+      },
+    })
+    const callbacks: string[] = []
+
+    let form!: InertiaPrecognitiveForm<{ name: string }>
+    const dispose = createRoot((rootDispose) => {
+      form = useForm('post', '/users', { name: '' }).setValidationTimeout(0).withAllErrors()
+      form.setData('name', 'ab')
+      form.validate('name', {
+        onValidationError: () => callbacks.push(`error:${form.invalid('name')}:${form.validating}`),
+        onFinish: () => callbacks.push(`finish:${form.validating}`),
+      })
+      return rootDispose
+    })
+
+    await vi.waitFor(() => expect(form.validating).toBe(false))
+    expect(form.errors.name).toEqual(['Too short', 'Letters only'])
+    expect(callbacks).toEqual(['error:true:true', 'finish:false'])
+    dispose()
+  })
+
+  it('ignores stale validation results even when the transport resolves after cancellation', async () => {
+    const requests: Array<{
+      config: HttpRequestConfig
+      resolve(response: HttpResponse): void
+      reject(error: unknown): void
+    }> = []
+    client.useHttpClient({
+      request: (config) =>
+        new Promise((resolve, reject) => {
+          requests.push({ config, resolve, reject })
+        }),
+    })
+
+    let form!: InertiaPrecognitiveForm<{ name: string }>
+    const dispose = createRoot((rootDispose) => {
+      const validationForm = useForm('post', '/users', { name: '' }).setValidationTimeout(0)
+      form = validationForm
+      validationForm.setData('name', 'ab')
+      validationForm.validate('name')
+      validationForm.setData('name', 'Grace')
+      validationForm.validate('name')
+      return rootDispose
+    })
+
+    await vi.waitFor(() => expect(requests).toHaveLength(2))
+    requests[1]!.resolve({
+      status: 204,
+      data: null,
+      headers: { precognition: 'true', 'precognition-success': 'true' },
+    })
+    await vi.waitFor(() => expect(form.valid('name')).toBe(true))
+
+    const staleResponse = {
+      status: 422,
+      data: { errors: { name: ['Stale error'] } },
+      headers: { precognition: 'true' },
+    }
+    requests[0]!.reject(new HttpResponseError(staleResponse))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(form.errors).toEqual({})
+    expect(form.valid('name')).toBe(true)
+    dispose()
+  })
+
+  it('cancels validation before submission and ignores completion after owner disposal', async () => {
+    let validationRequest!: HttpRequestConfig
+    let resolveValidation!: (response: HttpResponse) => void
+    client.useHttpClient({
+      request: (config) => {
+        validationRequest = config
+        return new Promise((resolve) => (resolveValidation = resolve))
+      },
+    })
+    const submission = capturePost()
+
+    let form!: InertiaPrecognitiveForm<{ name: string }>
+    const dispose = createRoot((rootDispose) => {
+      form = useForm('post', '/users', { name: '' }).setValidationTimeout(0)
+      form.setData('name', 'Grace')
+      form.validate('name')
+      return rootDispose
+    })
+
+    form.submit()
+    expect(validationRequest.signal?.aborted).toBe(true)
+    expect(submission.spy).toHaveBeenCalledOnce()
+    expect(form.validating).toBe(false)
+
+    dispose()
+    resolveValidation({
+      status: 204,
+      data: null,
+      headers: { precognition: 'true', 'precognition-success': 'true' },
+    })
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(form.valid('name')).toBe(false)
   })
 
   it('cleans up recently-successful timers and uses the configured duration', () => {

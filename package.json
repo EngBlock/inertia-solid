@@ -54,7 +54,8 @@
     "solid-js": "^2.0.0-rc.0"
   },
   "dependencies": {
-    "es-toolkit": "^1.33.0"
+    "es-toolkit": "^1.33.0",
+    "laravel-precognition": "^2.0.0"
   },
   "devDependencies": {
     "@inertiajs/core": "^3.7.0",
@@ -62,7 +63,7 @@
     "@solidjs/web": "2.0.0-rc.0",
     "jsdom": "^26.1.0",
     "solid-js": "2.0.0-rc.0",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vite": "^8.2.1",
     "vitest": "^3.2.4"
   },

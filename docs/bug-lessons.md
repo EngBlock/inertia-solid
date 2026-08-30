@@ -1,5 +1,14 @@
 # Bug lessons
 
+## 2026-08-30 — Form Precognition initialization halted reactivity
+
+- **Affected area:** `src/Form.tsx`, `src/useForm.ts`
+- **Symptom signature:** Rendering a Precognition-enabled `<Form>` halted with `Maximum call stack size exceeded` or `Cannot read properties of undefined (reading 'effect')` before its fields appeared.
+- **Root cause:** Precognition initialization flushed a store write during component construction and used Solid 1's one-argument `createEffect` shape against Solid 2's source-and-effect API, recursively re-entering or detaching effect creation from its owner.
+- **Resolution:** Avoid store writes and flushes when idle during form construction, and express reactive validation props with Solid 2 source/effect pairs plus explicit initial setup.
+- **Regression signal:** `pnpm --dir tests/browser exec playwright test precognition.spec.ts --project=solid-csr`
+- **Prevention rule:** Component initialization must not flush reactive writes, and Solid 2 effects must always declare a source separately from the effect callback.
+
 ## 2026-08-30 — Client bundle was not hydratable
 
 - **Affected area:** `vite.config.ts`, `tests/browser/vite.config.ts`, Solid SSR hydration
