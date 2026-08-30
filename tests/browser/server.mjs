@@ -14,6 +14,14 @@ const ssrRenderer = ssr ? await import('./dist/server/ssr.js') : null
 const routes = {
   '/': { component: 'Home', props: { message: 'Rendered by the shared fixture server' } },
   '/about': { component: 'About', props: { message: 'Client-side navigation completed' } },
+  '/layout-props/basic': { component: 'LayoutProps/Basic', props: {} },
+  '/layout-props/named-dynamic': { component: 'LayoutProps/NamedDynamic', props: { title: 'Page Title' } },
+  '/layout-props/persistent-a': { component: 'LayoutProps/PersistentA', props: {} },
+  '/layout-props/persistent-b': { component: 'LayoutProps/PersistentB', props: {} },
+  '/layout-props/suffix-a': { component: 'LayoutProps/SuffixA', props: {} },
+  '/layout-props/suffix-b': { component: 'LayoutProps/SuffixB', props: {} },
+  '/layout-props/stateful-1': { component: 'LayoutProps/Stateful', props: { step: 1 } },
+  '/layout-props/stateful-2': { component: 'LayoutProps/Stateful', props: { step: 2 } },
 }
 
 const mimeTypes = {

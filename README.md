@@ -3,7 +3,7 @@
 A community SolidJS 2 adapter for [Inertia.js](https://inertiajs.com/).
 
 > [!WARNING]
-> This package is an early alpha. The runtime spine, links, head descriptors, deferred props, polling, prefetch state, and remembered signals are present. Forms, direct HTTP helpers, visibility, infinite scroll, and fully persistent layout owners are still being implemented. Do not use this release in production yet.
+> This package is an early alpha. The runtime spine, persistent layouts, links, head descriptors, deferred props, polling, prefetch state, and remembered signals are present. Forms, direct HTTP helpers, visibility, and infinite scroll are still being implemented. Do not use this release in production yet.
 
 ## Design
 
@@ -66,6 +66,25 @@ export default function Users() {
 ```
 
 `usePage()` returns a stable read-only reactive facade. Read its properties in JSX or a memo; avoid destructuring reactive values at component top level.
+
+## Persistent layouts
+
+Layout components retain their owners and local state across navigation while page owners follow `preserveState`. Dynamic props can target every layout or one named layout:
+
+```tsx
+import { setLayoutProps } from '@engblock/inertia-solid'
+
+function Page() {
+  return <button onClick={() => setLayoutProps('content', { padding: 'xl' })}>Expand content</button>
+}
+
+Page.layout = {
+  app: [AppLayout, { title: 'Dashboard' }],
+  content: [ContentLayout, { padding: 'md' }],
+}
+```
+
+`resetLayoutProps()` explicitly clears dynamic values. Non-preserving navigation clears them automatically.
 
 ## Deferred and native async data
 
@@ -141,16 +160,17 @@ Implemented:
 - `usePoll`
 - `usePrefetch`
 - `useRemember`
+- Owner-safe persistent and named layouts
+- Reactive `setLayoutProps` and `resetLayoutProps`
 - Core/config/server exports
 
 Next priorities:
 
-1. Persistent layout owner compatibility spike
-2. `useForm`, `<Form>`, and Precognition
-3. `useHttp`
-4. `WhenVisible` and `InfiniteScroll`
-5. Full Inertia shared Playwright suite and browser matrix
-6. Solid ambient-head and async SSR integration
+1. `useForm`, `<Form>`, and Precognition
+2. `useHttp`
+3. `WhenVisible` and `InfiniteScroll`
+4. Full Inertia shared Playwright suite and browser matrix
+5. Solid ambient-head and async SSR integration
 
 ## License
 
