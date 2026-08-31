@@ -12,6 +12,9 @@ export default defineConfig({
     solid(),
     tailwindcss(),
   ],
+  resolve: {
+    dedupe: ['@solidjs/web', 'solid-js'],
+  },
   server: {
     port: 5174,
     watch: {

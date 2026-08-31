@@ -1,5 +1,8 @@
 *
 !.gitignore
 !factories/
+!factories/**
 !migrations/
+!migrations/**
 !seeders/
+!seeders/**
