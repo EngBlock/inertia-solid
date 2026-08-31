@@ -1,5 +1,14 @@
 # Bug lessons
 
+## 2026-08-31 — Trellis database files excluded by nested gitignore
+
+- **Affected area:** `playgrounds/trello/database/.gitignore`, migrations, and demo seeder
+- **Symptom signature:** `php artisan migrate --seed` reported `Nothing to migrate` and then failed with `Target class [DatabaseSeeder] does not exist.` After restoring only the app schema, browser requests failed with `SQLSTATE[HY000]: General error: 1 no such table: sessions`.
+- **Root cause:** The database ignore file re-included the `migrations/`, `factories/`, and `seeders/` directories but not their contents, so the initial playground commit silently omitted the application schema, database-backed session/cache/queue tables, and `DatabaseSeeder`.
+- **Resolution:** Re-include each directory's descendants and add the complete Trellis schema, Laravel runtime tables, and seeded demo workspace.
+- **Regression signal:** `cd playgrounds/trello && php artisan test` and `php artisan migrate:fresh --seed`
+- **Prevention rule:** For an ignored database directory, unignore both each tracked subdirectory and its descendants (for example, `!migrations/` and `!migrations/**`), then verify intended files appear in `git status` before committing.
+
 ## 2026-08-30 — Form Precognition initialization halted reactivity
 
 - **Affected area:** `src/Form.tsx`, `src/useForm.ts`
