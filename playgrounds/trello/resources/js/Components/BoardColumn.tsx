@@ -2,6 +2,7 @@ import { For, Show, createMemo, createSignal } from 'solid-js'
 import type { BoardMutation } from '../lib/useLocalBoard'
 import type { Board, BoardList, Card } from '../types/board'
 import BoardCard from './BoardCard'
+import ConfirmDialog from './ConfirmDialog'
 import Icon from './Icon'
 
 type BoardColumnProps = {
@@ -56,7 +57,6 @@ export default function BoardColumn(props: BoardColumnProps) {
   }
 
   const deleteList = () => {
-    if (!window.confirm(`Delete “${props.list.title}” and its ${props.list.cards.length} cards?`)) return
     props.mutate(`deleted the “${props.list.title}” list`, (board) => {
       board.lists = board.lists.filter((item) => item.id !== props.list.id)
     })
@@ -80,9 +80,15 @@ export default function BoardColumn(props: BoardColumnProps) {
           onChange={(event) => renameList(event.currentTarget.value)}
         />
         <span class="card-count">{props.list.cards.length}</span>
-        <button type="button" aria-label={`Delete ${props.list.title}`} onClick={deleteList}>
+        <ConfirmDialog
+          triggerLabel={`Delete ${props.list.title}`}
+          title={`Delete “${props.list.title}”?`}
+          description={`Its ${props.list.cards.length} cards will also be permanently deleted.`}
+          confirmLabel="Delete list"
+          onConfirm={deleteList}
+        >
           <Icon name="menu" size={17} />
-        </button>
+        </ConfirmDialog>
       </div>
 
       <div

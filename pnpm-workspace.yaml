@@ -3,6 +3,10 @@ packages:
   - 'playgrounds/*'
   - 'tests/browser'
 
+# Remove after Kobalte registers dismissable layers reactively and marks nested top layers upstream.
+patchedDependencies:
+  '@kobalte/core@2.0.0-alpha.0': patches/@kobalte__core@2.0.0-alpha.0.patch
+
 allowBuilds:
   esbuild: true
 onlyBuiltDependencies:

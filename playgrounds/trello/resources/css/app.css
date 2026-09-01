@@ -50,6 +50,15 @@ a {
   outline: 3px solid rgb(14 165 164 / 38%);
   outline-offset: 2px;
 }
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 
 .background-ocean {
   background: linear-gradient(135deg, #0f766e, #155e75 58%, #164e63);
@@ -632,10 +641,6 @@ a {
   position: fixed;
   z-index: 100;
   inset: 0;
-  display: grid;
-  overflow: auto;
-  place-items: center;
-  padding: 30px;
   background: rgb(12 31 31 / 60%);
   backdrop-filter: blur(5px);
   animation: fade-in 0.16s ease-out;
@@ -646,8 +651,14 @@ a {
   }
 }
 .create-board-modal {
-  position: relative;
-  width: min(430px, 100%);
+  position: fixed;
+  z-index: 101;
+  top: 50%;
+  left: 50%;
+  width: min(430px, calc(100% - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  transform: translate(-50%, -50%);
   padding: 31px;
   border: 1px solid rgb(255 255 255 / 55%);
   border-radius: 17px;
@@ -703,8 +714,8 @@ a {
 .board-preview span:nth-child(2) {
   height: 54px;
 }
-.create-board-modal form > label,
-.create-board-modal legend {
+.create-board-modal form label,
+.background-field > span {
   display: block;
   margin-bottom: 7px;
   color: #405d59;
@@ -730,18 +741,20 @@ a {
   color: #b94343 !important;
   font-size: 10px !important;
 }
-.create-board-modal fieldset {
+.background-field {
   margin: 17px 0 0;
-  padding: 0;
-  border: 0;
 }
 .background-options {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 7px;
 }
+.background-option {
+  min-width: 0;
+}
 .background-swatch {
   display: grid;
+  width: 100%;
   height: 33px;
   place-items: center;
   border-radius: 6px;
@@ -751,13 +764,64 @@ a {
 .background-swatch svg {
   opacity: 0;
 }
-.background-swatch.selected {
+.background-option[data-checked] .background-swatch {
   box-shadow:
     0 0 0 2px #fff,
     0 0 0 4px #4a9188;
 }
-.background-swatch.selected svg {
+.background-option[data-checked] .background-swatch svg {
   opacity: 1;
+}
+
+.confirmation-dialog {
+  position: fixed;
+  z-index: 121;
+  top: 50%;
+  left: 50%;
+  width: min(390px, calc(100% - 32px));
+  transform: translate(-50%, -50%);
+  padding: 27px;
+  border: 1px solid #d8e2df;
+  border-radius: 15px;
+  color: #34514e;
+  background: #fff;
+  box-shadow: 0 24px 70px rgb(10 30 29 / 32%);
+}
+.confirmation-backdrop {
+  z-index: 120;
+}
+.confirmation-dialog h2 {
+  margin: 0;
+  color: #274743;
+  font-family: Georgia, serif;
+  font-size: 23px;
+}
+.confirmation-dialog p {
+  margin: 10px 0 23px;
+  color: #71817e;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.confirmation-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.danger-button {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 15px;
+  border-radius: 8px;
+  color: #fff;
+  background: #b94c4c;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.danger-button:hover {
+  background: #a43e3e;
 }
 
 /* Board */
@@ -1254,10 +1318,7 @@ a {
 /* Toolbar popovers and activity */
 .toolbar-popover,
 .activity-drawer {
-  position: absolute;
   z-index: 70;
-  top: 55px;
-  right: 17px;
   width: 300px;
   max-height: calc(100vh - 130px);
   overflow: auto;
@@ -1275,9 +1336,6 @@ a {
     transform: translateY(-5px) scale(0.98);
   }
 }
-.filter-popover {
-  right: 128px;
-}
 .popover-heading {
   display: flex;
   min-height: 34px;
@@ -1286,6 +1344,7 @@ a {
   padding: 0 2px 9px;
   border-bottom: 1px solid #e5ebe9;
 }
+.popover-heading h2,
 .popover-heading h3 {
   margin: 0;
   color: #274743;
@@ -1316,7 +1375,17 @@ a {
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.filter-popover > button {
+.filter-group-label {
+  display: block;
+  margin: 15px 5px 7px;
+  color: #566a66;
+  font-size: 8px;
+  font-weight: 780;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.filter-option,
+.filter-popover > .clear-filter {
   display: flex;
   width: 100%;
   min-height: 35px;
@@ -1330,24 +1399,45 @@ a {
   text-align: left;
   cursor: pointer;
 }
-.filter-popover > button:hover {
+.filter-option:hover,
+.filter-popover > .clear-filter:hover {
   background: #eef4f2;
 }
-.filter-popover > button > svg:last-child {
-  margin-left: auto;
-  opacity: 0;
-  color: #137970;
+.filter-option > label {
+  min-width: 0;
+  flex: 1;
+  cursor: pointer;
 }
-.filter-popover > button.selected {
+.filter-option > svg {
+  flex: 0 0 auto;
+}
+.filter-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+}
+.filter-checkbox {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  margin-left: auto;
+  place-items: center;
+  border: 1px solid #bdc9c6;
+  border-radius: 5px;
+  color: #fff;
+}
+.filter-option[data-checked] {
   color: #1d5f59;
   background: #e8f3f0;
 }
-.filter-popover > button.selected > svg:last-child {
-  opacity: 1;
+.filter-option[data-checked] .filter-checkbox {
+  border-color: #318b82;
+  background: #318b82;
 }
-.filter-popover > button i {
+.filter-option > i {
   width: 24px;
   height: 15px;
+  flex: 0 0 auto;
   border-radius: 4px;
 }
 .filter-popover .avatar {
@@ -1357,19 +1447,37 @@ a {
   font-size: 7px;
 }
 .filter-radio {
+  display: grid;
   width: 16px;
   height: 16px;
+  flex: 0 0 auto;
+  place-items: center;
   border: 1px solid #bdc9c6;
   border-radius: 50%;
 }
-.selected .filter-radio {
-  border: 4px solid #318b82;
+.filter-radio > div {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #318b82;
 }
-.clear-filter {
+.filter-option[data-checked] .filter-radio {
+  border-color: #318b82;
+}
+.filter-option[data-checked] > svg:first-of-type {
+  color: #318b82;
+}
+.filter-checkbox svg {
+  display: block;
+}
+.filter-option:not([data-checked]) .filter-checkbox svg {
+  opacity: 0;
+}
+.filter-popover > .clear-filter {
   justify-content: center;
   margin-top: 10px;
   border-top: 1px solid #e5ebe9;
-  color: #28736c !important;
+  color: #28736c;
 }
 .board-menu-popover textarea {
   width: 100%;
@@ -1388,23 +1496,27 @@ a {
   grid-template-columns: repeat(5, 1fr);
   gap: 6px;
 }
-.menu-backgrounds button {
+.menu-background-option {
+  min-width: 0;
+}
+.menu-background-option > div {
   display: grid;
+  width: 100%;
   height: 35px;
   place-items: center;
   border-radius: 6px;
   color: #fff;
   cursor: pointer;
 }
-.menu-backgrounds button svg {
+.menu-background-option svg {
   opacity: 0;
 }
-.menu-backgrounds button.selected {
+.menu-background-option[data-checked] > div {
   box-shadow:
     inset 0 0 0 2px #fff,
     0 0 0 2px #388c83;
 }
-.menu-backgrounds button.selected svg {
+.menu-background-option[data-checked] svg {
   opacity: 1;
 }
 .menu-danger {
@@ -1427,6 +1539,7 @@ a {
 }
 .activity-drawer {
   position: fixed;
+  z-index: 80;
   top: 57px;
   right: 0;
   width: 350px;
@@ -1474,15 +1587,16 @@ a {
 }
 
 /* Card detail */
-.card-modal-backdrop {
-  align-items: start;
-}
 .card-modal {
-  position: relative;
-  width: min(850px, 100%);
-  min-height: 600px;
-  margin: 12px 0;
-  overflow: visible;
+  position: fixed;
+  z-index: 101;
+  top: 5vh;
+  left: 50%;
+  width: min(850px, calc(100% - 32px));
+  max-height: 90vh;
+  min-height: min(600px, 90vh);
+  overflow: auto;
+  transform: translateX(-50%);
   border-radius: 15px;
   color: #2a4643;
   background: #f7f9f8;
@@ -1620,6 +1734,9 @@ a {
   border-color: transparent;
   color: #4c9d72;
 }
+.date-chip label {
+  cursor: pointer;
+}
 .modal-section {
   margin-top: 25px;
 }
@@ -1692,7 +1809,7 @@ a {
 .checklist-item:hover {
   background: #edf2f0;
 }
-.checklist-item > button:first-child {
+.checklist-control {
   display: grid;
   width: 17px;
   height: 17px;
@@ -1703,12 +1820,15 @@ a {
   background: #fff;
   cursor: pointer;
 }
-.checklist-item > button:first-child.checked {
+.checklist-control.checked {
   border-color: #318b7d;
   color: #fff;
   background: #318b7d;
 }
-.checklist-item span.complete {
+.checklist-item > label {
+  cursor: pointer;
+}
+.checklist-item > label.complete {
   color: #5f716d;
   text-decoration: line-through;
 }
@@ -1811,8 +1931,8 @@ a {
   min-width: 0;
 }
 .card-modal-sidebar > button,
-.card-modal-sidebar > select,
-.card-modal-sidebar details > summary {
+.card-list-select,
+.card-action-popover-trigger {
   display: flex;
   width: 100%;
   min-height: 34px;
@@ -1828,39 +1948,42 @@ a {
   cursor: pointer;
 }
 .card-modal-sidebar > button:hover,
-.card-modal-sidebar details > summary:hover {
+.card-list-select:hover,
+.card-action-popover-trigger:hover {
   background: #dce5e2;
 }
-.card-modal-sidebar > select {
-  border: 0;
-  outline: 0;
+.card-list-select > span:first-child {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card-list-select > span:last-child {
+  display: grid;
+  margin-left: auto;
+  place-items: center;
+  transition: transform 0.12s ease;
+}
+.card-list-select[data-expanded] > span:last-child {
+  transform: rotate(180deg);
 }
 .card-modal-sidebar > button.danger {
   color: #a94f4f;
   background: #f6e8e8;
 }
-.card-modal-sidebar details {
-  position: relative;
-}
-.card-modal-sidebar summary {
-  list-style: none;
-}
-.card-modal-sidebar summary::-webkit-details-marker {
-  display: none;
-}
 .detail-popover {
-  position: absolute;
-  z-index: 5;
-  top: 38px;
-  right: 0;
+  z-index: 111;
   width: 230px;
+  max-height: min(390px, calc(100vh - 24px));
+  overflow: auto;
   padding: 8px;
   border: 1px solid #d4dfdc;
   border-radius: 9px;
   background: #fff;
   box-shadow: 0 9px 25px rgb(25 50 48 / 19%);
 }
-.detail-popover > button {
+.detail-option {
   display: flex;
   width: 100%;
   min-height: 35px;
@@ -1874,16 +1997,22 @@ a {
   text-align: left;
   cursor: pointer;
 }
-.detail-popover > button:hover {
+.detail-option:hover {
   background: #edf3f1;
 }
-.detail-popover > button > svg {
+.detail-option > label {
+  min-width: 0;
+  flex: 1;
+  cursor: pointer;
+}
+.detail-option > div:last-child {
+  display: grid;
   margin-left: auto;
-  opacity: 0;
+  place-items: center;
   color: #147d75;
 }
-.detail-popover > button.selected > svg {
-  opacity: 1;
+.detail-option:not([data-checked]) > div:last-child svg {
+  opacity: 0;
 }
 .detail-popover .avatar {
   width: 26px;
@@ -1891,9 +2020,10 @@ a {
   border: 0;
   font-size: 7px;
 }
-.labels-popover > button i {
+.labels-popover .detail-option > i {
   width: 31px;
   height: 19px;
+  flex: 0 0 auto;
   border-radius: 4px;
 }
 .detail-popover form {
@@ -1933,19 +2063,60 @@ a {
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
 }
-.cover-popover button {
+.cover-option > div {
   display: grid;
+  width: 100%;
   height: 35px;
   place-items: center;
   border-radius: 5px;
   color: #fff;
   cursor: pointer;
 }
-.cover-popover button svg {
+.cover-option svg {
   opacity: 0;
 }
-.cover-popover button.selected svg {
+.cover-option[data-checked] svg {
   opacity: 1;
+}
+
+.select-popover {
+  z-index: 111;
+  min-width: 185px;
+  overflow: hidden;
+  padding: 6px;
+  border: 1px solid #d4dfdc;
+  border-radius: 9px;
+  color: #4b6662;
+  background: #fff;
+  box-shadow: 0 9px 25px rgb(25 50 48 / 19%);
+}
+.select-popover ul {
+  margin: 0;
+  padding: 0;
+  outline: 0;
+  list-style: none;
+}
+.select-item {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 9px;
+  cursor: pointer;
+}
+.select-item[data-highlighted] {
+  background: #edf3f1;
+}
+.select-item > span:last-child {
+  display: grid;
+  margin-left: auto;
+  place-items: center;
+  color: #147d75;
+}
+.select-item:not([data-selected]) > span:last-child {
+  opacity: 0;
 }
 
 @media (max-width: 900px) {
@@ -1988,11 +2159,6 @@ a {
   .column-cards {
     max-height: calc(100vh - 295px);
   }
-  .filter-popover,
-  .board-menu-popover {
-    top: 100px;
-    right: 12px;
-  }
   .card-modal-grid {
     grid-template-columns: 1fr;
     padding-left: 65px;
@@ -2004,10 +2170,6 @@ a {
   }
   .card-modal-sidebar > label {
     grid-column: 1 / -1;
-  }
-  .detail-popover {
-    right: auto;
-    left: 0;
   }
 }
 
@@ -2036,9 +2198,6 @@ a {
   .board-tile-star,
   .board-tile-delete {
     opacity: 1;
-  }
-  .modal-backdrop {
-    padding: 12px;
   }
   .create-board-modal {
     padding: 25px 20px;

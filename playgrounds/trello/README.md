@@ -2,7 +2,7 @@
 
 Trellis is a separate Laravel 13 playground for the repository's Solid Inertia adapter. It is a polished Trello-style workspace with seeded demo data, board and card management, drag-and-drop ordering, filters, labels, members, due dates, covers, checklists, comments, and activity history.
 
-The app pins both `solid-js` and `@solidjs/web` to `2.0.0-rc.4` and consumes `@engblock/inertia-solid` through the repository's pnpm workspace.
+The app pins `solid-js` and `@solidjs/web` to `2.0.0-rc.0`, uses the accessible, unstyled primitives from `@kobalte/core@2.0.0-alpha.0`, and consumes `@engblock/inertia-solid` through the repository's pnpm workspace.
 
 ## Local-first architecture
 

@@ -1,7 +1,22 @@
 import { Head, Link, router } from '@engblock/inertia-solid'
+import { Checkbox } from '@kobalte/core/checkbox'
+import {
+  CloseButton as DialogCloseButton,
+  Content as DialogContent,
+  Description as DialogDescription,
+  Portal as DialogPortal,
+  Root as DialogRoot,
+  Title as DialogTitle,
+  Trigger as DialogTrigger,
+} from '@kobalte/core/dialog'
+import { Popover } from '@kobalte/core/popover'
+import { RadioGroup } from '@kobalte/core/radio-group'
+import { TextField } from '@kobalte/core/text-field'
+import { ToggleButton } from '@kobalte/core/toggle-button'
 import { For, Show, createMemo, createSignal } from 'solid-js'
 import BoardColumn from '../../Components/BoardColumn'
 import CardModal from '../../Components/CardModal'
+import ConfirmDialog from '../../Components/ConfirmDialog'
 import Icon from '../../Components/Icon'
 import useLocalBoard from '../../lib/useLocalBoard'
 import type { Background, Board, Card, CurrentUser } from '../../types/board'
@@ -131,10 +146,8 @@ export default function BoardShow(props: ShowProps) {
   }
 
   const deleteBoard = () => {
-    if (window.confirm(`Delete “${local.board.title}”? This cannot be undone.`)) {
-      localStorage.removeItem(`trellis:board:${local.board.id}`)
-      router.delete(`/boards/${local.board.id}`)
-    }
+    localStorage.removeItem(`trellis:board:${local.board.id}`)
+    router.delete(`/boards/${local.board.id}`)
   }
 
   return (
@@ -154,15 +167,10 @@ export default function BoardShow(props: ShowProps) {
           <span>/</span>
           <strong>{local.board.title}</strong>
         </nav>
-        <div class="board-header-search">
+        <TextField class="board-header-search" value={query()} onChange={setQuery}>
           <Icon name="search" size={16} />
-          <input
-            value={query()}
-            onInput={(event) => setQuery(event.currentTarget.value)}
-            placeholder="Search this board"
-            aria-label="Search this board"
-          />
-        </div>
+          <TextField.Input placeholder="Search this board" aria-label="Search this board" />
+        </TextField>
         <button type="button" class={`sync-status status-${local.status()}`} onClick={() => void local.syncNow()}>
           <i /> {syncCopy[local.status()]}
         </button>
@@ -185,11 +193,11 @@ export default function BoardShow(props: ShowProps) {
               if (title) local.mutate(`renamed the board to “${title}”`, (board) => (board.title = title))
             }}
           />
-          <button
-            type="button"
+          <ToggleButton
             class={local.board.starred ? 'starred' : ''}
+            pressed={local.board.starred}
             aria-label={local.board.starred ? 'Unstar board' : 'Star board'}
-            onClick={() =>
+            onChange={() =>
               local.mutate(
                 local.board.starred ? 'unstarred this board' : 'starred this board',
                 (board) => (board.starred = !board.starred),
@@ -197,7 +205,7 @@ export default function BoardShow(props: ShowProps) {
             }
           >
             <Icon name="star" filled={local.board.starred} />
-          </button>
+          </ToggleButton>
           <span class="board-visibility">Workspace</span>
         </div>
         <div class="board-tools">
@@ -213,116 +221,197 @@ export default function BoardShow(props: ShowProps) {
               <span class="avatar avatar-more">+{local.board.members.length - 4}</span>
             </Show>
           </div>
-          <button type="button" onClick={() => setFiltersOpen(!filtersOpen())}>
-            <Icon name="filter" size={16} /> Filter{' '}
-            <Show when={activeFilterCount()}>
-              <b>{activeFilterCount()}</b>
-            </Show>
-          </button>
-          <button type="button" onClick={() => setActivityOpen(!activityOpen())}>
-            <Icon name="activity" size={16} /> Activity
-          </button>
-          <button type="button" onClick={() => setMenuOpen(!menuOpen())}>
-            <Icon name="menu" size={17} /> Menu
-          </button>
+          <Popover open={filtersOpen()} onOpenChange={setFiltersOpen} placement="bottom-end" gutter={8}>
+            <Popover.Trigger>
+              <Icon name="filter" size={16} /> Filter{' '}
+              <Show when={activeFilterCount()}>
+                <b>{activeFilterCount()}</b>
+              </Show>
+            </Popover.Trigger>
+            <Popover.Portal>
+              <Popover.Content class="toolbar-popover filter-popover">
+                <div class="popover-heading">
+                  <Popover.Title>Filter cards</Popover.Title>
+                  <Popover.CloseButton aria-label="Close filters">
+                    <Icon name="close" />
+                  </Popover.CloseButton>
+                </div>
+                <RadioGroup
+                  class="filter-group"
+                  value={dueFilter()}
+                  onChange={(value) => setDueFilter(value as 'all' | 'due' | 'complete')}
+                >
+                  <RadioGroup.Label class="filter-group-label">Due date</RadioGroup.Label>
+                  <RadioGroup.Item value="all" class="filter-option">
+                    <RadioGroup.ItemInput />
+                    <RadioGroup.ItemControl class="filter-radio">
+                      <RadioGroup.ItemIndicator />
+                    </RadioGroup.ItemControl>
+                    <RadioGroup.ItemLabel>Any date</RadioGroup.ItemLabel>
+                  </RadioGroup.Item>
+                  <RadioGroup.Item value="due" class="filter-option">
+                    <RadioGroup.ItemInput />
+                    <RadioGroup.ItemControl class="filter-icon">
+                      <Icon name="clock" />
+                    </RadioGroup.ItemControl>
+                    <RadioGroup.ItemLabel>Has a due date</RadioGroup.ItemLabel>
+                  </RadioGroup.Item>
+                  <RadioGroup.Item value="complete" class="filter-option">
+                    <RadioGroup.ItemInput />
+                    <RadioGroup.ItemControl class="filter-icon">
+                      <Icon name="check" />
+                    </RadioGroup.ItemControl>
+                    <RadioGroup.ItemLabel>Marked complete</RadioGroup.ItemLabel>
+                  </RadioGroup.Item>
+                </RadioGroup>
+                <span class="filter-group-label">Labels</span>
+                <For each={local.board.labels}>
+                  {(label) => (
+                    <Checkbox
+                      class="filter-option"
+                      checked={labelFilters().includes(label.id)}
+                      onChange={() => toggleLabelFilter(label.id)}
+                    >
+                      <Checkbox.Input />
+                      <i class={`label-${label.color}`} />
+                      <Checkbox.Label>{label.name}</Checkbox.Label>
+                      <Checkbox.Control class="filter-checkbox">
+                        <Checkbox.Indicator>
+                          <Icon name="check" size={14} />
+                        </Checkbox.Indicator>
+                      </Checkbox.Control>
+                    </Checkbox>
+                  )}
+                </For>
+                <span class="filter-group-label">Members</span>
+                <For each={local.board.members}>
+                  {(member) => (
+                    <Checkbox
+                      class="filter-option"
+                      checked={memberFilters().includes(member.id)}
+                      onChange={() => toggleMemberFilter(member.id)}
+                    >
+                      <Checkbox.Input />
+                      <span class={`avatar avatar-${member.color}`}>{member.initials}</span>
+                      <Checkbox.Label>{member.name}</Checkbox.Label>
+                      <Checkbox.Control class="filter-checkbox">
+                        <Checkbox.Indicator>
+                          <Icon name="check" size={14} />
+                        </Checkbox.Indicator>
+                      </Checkbox.Control>
+                    </Checkbox>
+                  )}
+                </For>
+                <button type="button" class="clear-filter" onClick={clearFilters}>
+                  Clear all filters
+                </button>
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover>
+
+          <DialogRoot open={activityOpen()} onOpenChange={setActivityOpen} modal={false}>
+            <DialogTrigger>
+              <Icon name="activity" size={16} /> Activity
+            </DialogTrigger>
+            <DialogPortal>
+              <DialogContent class="activity-drawer">
+                <div class="popover-heading">
+                  <DialogTitle>Activity</DialogTitle>
+                  <DialogCloseButton aria-label="Close activity">
+                    <Icon name="close" />
+                  </DialogCloseButton>
+                </div>
+                <DialogDescription class="drawer-intro">A record of the latest synced board changes.</DialogDescription>
+                <div class="activity-list">
+                  <For each={local.board.activity}>
+                    {(entry) => (
+                      <article>
+                        <span class="avatar avatar-teal">
+                          {entry.user.name
+                            .split(' ')
+                            .map((part) => part[0])
+                            .slice(0, 2)
+                            .join('')}
+                        </span>
+                        <p>
+                          <strong>{entry.user.name}</strong> {entry.action}
+                          <time>
+                            {new Date(entry.created_at).toLocaleString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })}
+                          </time>
+                        </p>
+                      </article>
+                    )}
+                  </For>
+                </div>
+              </DialogContent>
+            </DialogPortal>
+          </DialogRoot>
+
+          <Popover open={menuOpen()} onOpenChange={setMenuOpen} placement="bottom-end" gutter={8}>
+            <Popover.Trigger>
+              <Icon name="menu" size={17} /> Menu
+            </Popover.Trigger>
+            <Popover.Portal>
+              <Popover.Content class="toolbar-popover board-menu-popover">
+                <div class="popover-heading">
+                  <Popover.Title>Board menu</Popover.Title>
+                  <Popover.CloseButton aria-label="Close board menu">
+                    <Icon name="close" />
+                  </Popover.CloseButton>
+                </div>
+                <label>About this board</label>
+                <textarea
+                  value={local.board.description}
+                  onChange={(event) =>
+                    local.mutate(
+                      'updated the board description',
+                      (board) => (board.description = event.currentTarget.value),
+                    )
+                  }
+                  placeholder="Add a board description"
+                />
+                <RadioGroup
+                  class="menu-background-group"
+                  value={local.board.background}
+                  onChange={(value) =>
+                    local.mutate('changed the board background', (board) => (board.background = value as Background))
+                  }
+                >
+                  <RadioGroup.Label class="filter-group-label">Change background</RadioGroup.Label>
+                  <div class="menu-backgrounds">
+                    <For each={backgrounds}>
+                      {(background) => (
+                        <RadioGroup.Item value={background} class="menu-background-option">
+                          <RadioGroup.ItemInput />
+                          <RadioGroup.ItemControl class={`background-${background}`}>
+                            <RadioGroup.ItemIndicator>
+                              <Icon name="check" />
+                            </RadioGroup.ItemIndicator>
+                          </RadioGroup.ItemControl>
+                          <RadioGroup.ItemLabel class="visually-hidden">{background} background</RadioGroup.ItemLabel>
+                        </RadioGroup.Item>
+                      )}
+                    </For>
+                  </div>
+                </RadioGroup>
+                <ConfirmDialog
+                  triggerClass="menu-danger"
+                  title={`Delete “${local.board.title}”?`}
+                  description="This board and all of its cards will be permanently deleted."
+                  confirmLabel="Delete board"
+                  onConfirm={deleteBoard}
+                >
+                  <Icon name="trash" /> Delete board
+                </ConfirmDialog>
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover>
         </div>
-
-        <Show when={filtersOpen()}>
-          <aside class="toolbar-popover filter-popover">
-            <div class="popover-heading">
-              <h3>Filter cards</h3>
-              <button type="button" onClick={() => setFiltersOpen(false)}>
-                <Icon name="close" />
-              </button>
-            </div>
-            <label>Due date</label>
-            <button type="button" class={dueFilter() === 'all' ? 'selected' : ''} onClick={() => setDueFilter('all')}>
-              <span class="filter-radio" /> Any date
-            </button>
-            <button type="button" class={dueFilter() === 'due' ? 'selected' : ''} onClick={() => setDueFilter('due')}>
-              <Icon name="clock" /> Has a due date
-            </button>
-            <button
-              type="button"
-              class={dueFilter() === 'complete' ? 'selected' : ''}
-              onClick={() => setDueFilter('complete')}
-            >
-              <Icon name="check" /> Marked complete
-            </button>
-            <label>Labels</label>
-            <For each={local.board.labels}>
-              {(label) => (
-                <button
-                  type="button"
-                  class={labelFilters().includes(label.id) ? 'selected' : ''}
-                  onClick={() => toggleLabelFilter(label.id)}
-                >
-                  <i class={`label-${label.color}`} />
-                  {label.name}
-                  <Icon name="check" size={14} />
-                </button>
-              )}
-            </For>
-            <label>Members</label>
-            <For each={local.board.members}>
-              {(member) => (
-                <button
-                  type="button"
-                  class={memberFilters().includes(member.id) ? 'selected' : ''}
-                  onClick={() => toggleMemberFilter(member.id)}
-                >
-                  <span class={`avatar avatar-${member.color}`}>{member.initials}</span>
-                  {member.name}
-                  <Icon name="check" size={14} />
-                </button>
-              )}
-            </For>
-            <button type="button" class="clear-filter" onClick={clearFilters}>
-              Clear all filters
-            </button>
-          </aside>
-        </Show>
-
-        <Show when={menuOpen()}>
-          <aside class="toolbar-popover board-menu-popover">
-            <div class="popover-heading">
-              <h3>Board menu</h3>
-              <button type="button" onClick={() => setMenuOpen(false)}>
-                <Icon name="close" />
-              </button>
-            </div>
-            <label>About this board</label>
-            <textarea
-              value={local.board.description}
-              onChange={(event) =>
-                local.mutate(
-                  'updated the board description',
-                  (board) => (board.description = event.currentTarget.value),
-                )
-              }
-              placeholder="Add a board description"
-            />
-            <label>Change background</label>
-            <div class="menu-backgrounds">
-              <For each={backgrounds}>
-                {(background) => (
-                  <button
-                    type="button"
-                    class={`background-${background} ${local.board.background === background ? 'selected' : ''}`}
-                    onClick={() =>
-                      local.mutate('changed the board background', (board) => (board.background = background))
-                    }
-                  >
-                    <Icon name="check" />
-                  </button>
-                )}
-              </For>
-            </div>
-            <button type="button" class="menu-danger" onClick={deleteBoard}>
-              <Icon name="trash" /> Delete board
-            </button>
-          </aside>
-        </Show>
       </div>
 
       <main class="board-canvas" aria-label={`${local.board.title} lists`}>
@@ -371,44 +460,6 @@ export default function BoardShow(props: ShowProps) {
         </div>
       </main>
 
-      <Show when={activityOpen()}>
-        <aside class="activity-drawer">
-          <div class="popover-heading">
-            <h3>Activity</h3>
-            <button type="button" onClick={() => setActivityOpen(false)}>
-              <Icon name="close" />
-            </button>
-          </div>
-          <p class="drawer-intro">A record of the latest synced board changes.</p>
-          <div class="activity-list">
-            <For each={local.board.activity}>
-              {(entry) => (
-                <article>
-                  <span class="avatar avatar-teal">
-                    {entry.user.name
-                      .split(' ')
-                      .map((part) => part[0])
-                      .slice(0, 2)
-                      .join('')}
-                  </span>
-                  <p>
-                    <strong>{entry.user.name}</strong> {entry.action}
-                    <time>
-                      {new Date(entry.created_at).toLocaleString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      })}
-                    </time>
-                  </p>
-                </article>
-              )}
-            </For>
-          </div>
-        </aside>
-      </Show>
-
       <Show when={selectedCard()}>
         {(id) => (
           <CardModal
@@ -416,7 +467,7 @@ export default function BoardShow(props: ShowProps) {
             cardId={id()}
             currentUser={props.currentUser}
             mutate={local.mutate}
-            onClose={() => setSelectedCard()}
+            onClose={() => setSelectedCard(undefined)}
           />
         )}
       </Show>

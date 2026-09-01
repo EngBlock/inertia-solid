@@ -1,0 +1,105 @@
+diff --git a/dist/dismissable-layer/DXLD03yU.js b/dist/dismissable-layer/DXLD03yU.js
+index cd55657c989071481babeb63cb332e8c6d978d83..93da4ec3562f92c3663461e39230ca79d0cb77b3 100644
+--- a/dist/dismissable-layer/DXLD03yU.js
++++ b/dist/dismissable-layer/DXLD03yU.js
+@@ -1,6 +1,6 @@
+ import { n as layerStack } from "../layer-stack/DUp9FXTP.js";
+ import { createComponent, insert, ref, spread, template } from "@solidjs/web";
+-import { createContext, createEffect, createMemo, createSignal, omit, onSettled, useContext } from "solid-js";
++import { createContext, createEffect, createMemo, createSignal, omit, useContext } from "solid-js";
+ import { interactOutside } from "@solid-primitives/interaction";
+ import { createShortcut } from "@solid-primitives/keyboard";
+ //#region src/dismissable-layer/dismissable-layer-context.tsx
+@@ -54,22 +54,21 @@ function DismissableLayer(props) {
+ 			props.onDismiss();
+ 		}
+ 	}, { preventDefault: false });
+-	onSettled(() => {
+-		if (!ref$1()) return;
++	createEffect(ref$1, (node) => {
++		if (!node) return;
+ 		layerStack.addLayer({
+-			node: ref$1(),
++			node,
+ 			isPointerBlocking: isPointerBlocking(),
+ 			dismiss: props.onDismiss
+ 		});
+-		const unregisterFromParentLayer = parentContext?.registerNestedLayer(ref$1());
++		const unregisterFromParentLayer = parentContext?.registerNestedLayer(node);
+ 		layerStack.assignPointerEventToLayers();
+-		layerStack.disableBodyPointerEvents(ref$1());
++		layerStack.disableBodyPointerEvents(node);
+ 		return () => {
+-			if (!ref$1()) return;
+-			layerStack.removeLayer(ref$1());
++			layerStack.removeLayer(node);
+ 			unregisterFromParentLayer?.();
+ 			layerStack.assignPointerEventToLayers();
+-			layerStack.restoreBodyPointerEvents(ref$1());
++			layerStack.restoreBodyPointerEvents(node);
+ 		};
+ 	});
+ 	createEffect(() => ({
+@@ -92,9 +91,10 @@ function DismissableLayer(props) {
+ 		get children() {
+ 			var _el$ = _tmpl$();
+ 			ref(() => [
+ 				setRef,
+ 				interactOutsideRef,
+ 				props.ref
+ 			], _el$);
++			_el$.setAttribute("data-kb-top-layer", "");
+ 			spread(_el$, others, true);
+ 			insert(_el$, () => others.children);
+diff --git a/dist/dismissable-layer/RyRdwdaj.jsx b/dist/dismissable-layer/RyRdwdaj.jsx
+index 10231e480c630a0745eed759ae6af9181feb3422..0ed0b2f6f012cb7d8f9562af7069ada730502bd7 100644
+--- a/dist/dismissable-layer/RyRdwdaj.jsx
++++ b/dist/dismissable-layer/RyRdwdaj.jsx
+@@ -1,5 +1,5 @@
+ import { n as layerStack } from "../layer-stack/DUp9FXTP.jsx";
+-import { createContext, createEffect, createMemo, createSignal, omit, onSettled, useContext } from "solid-js";
++import { createContext, createEffect, createMemo, createSignal, omit, useContext } from "solid-js";
+ import { interactOutside } from "@solid-primitives/interaction";
+ import { createShortcut } from "@solid-primitives/keyboard";
+ //#region src/dismissable-layer/dismissable-layer-context.tsx
+@@ -52,22 +52,21 @@ function DismissableLayer(props) {
+ 			props.onDismiss();
+ 		}
+ 	}, { preventDefault: false });
+-	onSettled(() => {
+-		if (!ref()) return;
++	createEffect(ref, (node) => {
++		if (!node) return;
+ 		layerStack.addLayer({
+-			node: ref(),
++			node,
+ 			isPointerBlocking: isPointerBlocking(),
+ 			dismiss: props.onDismiss
+ 		});
+-		const unregisterFromParentLayer = parentContext?.registerNestedLayer(ref());
++		const unregisterFromParentLayer = parentContext?.registerNestedLayer(node);
+ 		layerStack.assignPointerEventToLayers();
+-		layerStack.disableBodyPointerEvents(ref());
++		layerStack.disableBodyPointerEvents(node);
+ 		return () => {
+-			if (!ref()) return;
+-			layerStack.removeLayer(ref());
++			layerStack.removeLayer(node);
+ 			unregisterFromParentLayer?.();
+ 			layerStack.assignPointerEventToLayers();
+-			layerStack.restoreBodyPointerEvents(ref());
++			layerStack.restoreBodyPointerEvents(node);
+ 		};
+ 	});
+ 	createEffect(() => ({
+@@ -88,9 +87,9 @@ function DismissableLayer(props) {
+ 	const context = { registerNestedLayer };
+ 	return <DismissableLayerContext value={context}>
+ 			<div ref={[
+ 		setRef,
+ 		interactOutsideRef,
+ 		props.ref
+-	]} {...others}>
++	]} data-kb-top-layer="" {...others}>
+ 				{others.children}
+ 			</div>

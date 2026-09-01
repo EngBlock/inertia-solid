@@ -197,7 +197,7 @@ See the [playground README](playgrounds/laravel/README.md) for first-run setup a
 
 ## Trellis playground
 
-[`playgrounds/trello`](playgrounds/trello) is a separate, full Laravel application that demonstrates a Trello-style local-first product on the adapter. It pins Solid and `@solidjs/web` to `2.0.0-rc.4`, uses Inertia for page navigation and server-owned page props, and uses Solid's `createOptimisticStore` with direct `useHttp` snapshot synchronization for instant board editing and offline recovery.
+[`playgrounds/trello`](playgrounds/trello) is a separate, full Laravel application that demonstrates a Trello-style local-first product on the adapter. It pins Solid and `@solidjs/web` to `2.0.0-rc.0`, builds its accessible controls with `@kobalte/core@2.0.0-alpha.0`, uses Inertia for page navigation and server-owned page props, and uses Solid's `createOptimisticStore` with direct `useHttp` snapshot synchronization for instant board editing and offline recovery.
 
 ```bash
 composer --working-dir=playgrounds/trello run setup
